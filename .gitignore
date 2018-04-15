@@ -2,3 +2,4 @@ venv/
 .idea/
 *.iml
 .pytest_cache/
+.env
