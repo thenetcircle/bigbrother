@@ -1,4 +1,7 @@
+import * as logger from '../logger';
+
 class MouseWatcher {
+
     constructor(sender, recorderId) {
         this.sender = sender;
         this.recorderId = recorderId;
@@ -89,4 +92,7 @@ class MouseWatcher {
             return true;
         }
     }
+
 }
+
+export default MouseWatcher;

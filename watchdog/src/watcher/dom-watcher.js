@@ -1,15 +1,14 @@
-import * as logger from './logger';
+import * as logger from '../logger';
+import TreeMirrorClient from 'mutation-summary/util/tree-mirror';
 
 class DOMWatcher {
-    sender;
-    recorderId;
-    startupTime = +new Date();
-    lastUpdateTime = 0;
-    mirrorClient = null;
 
     constructor(sender, recorderId) {
         this.sender = sender;
         this.recorderId = recorderId;
+        this.startupTime = +new Date();
+        this.lastUpdateTime = 0;
+        this.mirrorClient = null;
     }
 
     inactiveCheck() {
@@ -66,6 +65,7 @@ class DOMWatcher {
             this.mirrorClient.disconnect();
         }
     }
+
 }
 
 function _checkChangedDOM(sender, args) {
