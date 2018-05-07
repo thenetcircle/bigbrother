@@ -11,19 +11,11 @@ class Sender {
     }
 
     send(metadata, data, successCallback, errorCallback, post = true, compress = true, withCredentials = false) {
-        let endpoint = this.endpoint;
-        let method = post ? 'POST' : 'GET';
-
-        if (method === 'GET') {
-            endpoint += 'a.gif?m=' + this.encodeURIComponent(metadata) + '&d=' + this.encodeURIComponent(data);
-            data = undefined;
-        }
-        else {
-            endpoint += '?m=' + this.encodeURIComponent(metadata);
-            if (compress) {
-                endpoint += '&g=1';
-                data = pako.gzip(data);
-            }
+        let method   = 'POST';
+        let endpoint = this.endpoint + '?m=' + this.encodeURIComponent(metadata);
+        if (compress) {
+            endpoint += '&g=1';
+            data = pako.gzip(data);
         }
 
         logger.debug(`going to send data => url: ${endpoint}, method: ${method}, metadata: ${metadata}`);

@@ -21,7 +21,6 @@ class BufferedSender extends Sender {
         this.totalSize = 0;
         this.timer = null;
         this.lastTime = +new Date();
-        this.verb = 'e17r';
         this.pending = 0;
         this.errors = 0;
         this.sequence = 0;
@@ -45,7 +44,7 @@ class BufferedSender extends Sender {
                 && (+new Date() - this.lastTime) >= this.maxTime
             )
         ) {
-            let interval = (+new Date() - this.lastTime)
+            let interval = (+new Date() - this.lastTime);
             logger.debug(`going to send buffer, length: ${this.buffer.length}, total size: ${this.totalSize}, interval: ${interval}`);
             this._sendBuffer();
         }
