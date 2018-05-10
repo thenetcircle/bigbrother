@@ -1,16 +1,16 @@
 import * as logger from './logger';
 import DOMWatcher from './watcher/dom-watcher';
 import MouseWatcher from './watcher/mouse-watcher';
+import BufferedSender from './sender/buffered-sender';
 
 class WatchDog {
 
-    constructor(sender, userId) {
-        this._inited = false;
-        this._userId = userId;
-        this._recorderId = this._getRecorderId(userId);
-        this._sender = sender;
-        this._DOMWatchers = [];
-        this._MouseWatcher = null;
+    constructor(sceneName, context, endpoint, requestOptions = {}) {
+        this.isInited = false;
+        this.sessionId = this._generateSessionId();
+        this.domWatchers = [];
+        this.mouseWatcher = null;
+        this.sender = new BufferedSender(endpoint, requestOptions);
     }
 
     /**
@@ -18,18 +18,23 @@ class WatchDog {
      * @returns {WatchDog}
      */
     watchDOM(target) {
-        if (!this._checkObserver()) return this;
+        if (!this._checkDependencies()) return this;
+        if (typeof target !== 'object') {
+            logger.error('watchDOM requires a target object.');
+            return this;
+        }
 
         try {
             this._init();
 
-            var domWatcher = new DOMWatcher(this._sender, this._recorderId);
-            this._DOMWatchers.push(domWatcher);
+            let domWatcher = new DOMWatcher(this.sender, this.sessionId);
+            this.domWatchers.push(domWatcher);
             domWatcher.start(target);
         }
         catch (e) {
             logger.error(e.message)
         }
+
         return this;
     }
 
@@ -37,18 +42,19 @@ class WatchDog {
      * @returns {WatchDog}
      */
     watchMouse() {
-        if (!this._checkObserver()) return this;
+        if (!this._checkDependencies()) return this;
 
         try {
             this._init();
 
-            if (this._MouseWatcher === null) {
-                this._MouseWatcher = new MouseWatcher(this._sender, this._recorderId);
-                this._MouseWatcher.start();
+            if (this.mouseWatcher === null) {
+                this.mouseWatcher = new MouseWatcher(this.sender, this.sessionId);
+                this.mouseWatcher.start();
             }
         }
         catch (e) {
-            logger.error(e.message);
+            console.log(logger);
+            logger.error(`watch mouse behavior failed with error: ${e}`);
         }
         return this;
     }
@@ -58,15 +64,15 @@ class WatchDog {
      */
     stopWatch() {
         try {
-            if (this._DOMWatchers && this._DOMWatchers.length > 0) {
-                this._DOMWatchers.forEach(function (w) {
+            if (this.domWatchers && this.domWatchers.length > 0) {
+                this.domWatchers.forEach(function (w) {
                     w.stop();
                 });
-                this._DOMWatchers = [];
+                this.domWatchers = [];
             }
-            if (this._MouseWatcher !== null) {
-                this._MouseWatcher.stop();
-                this._MouseWatcher = null;
+            if (this.mouseWatcher !== null) {
+                this.mouseWatcher.stop();
+                this.mouseWatcher = null;
             }
         }
         catch (e) {
@@ -79,9 +85,9 @@ class WatchDog {
      * @returns {WatchDog}
      */
     _init() {
-        if (!this._inited) {
-            this._sender.send({
-                i: this._recorderId,
+        if (!this.isInited) {
+            this.sender.send({
+                i: this.sessionId,
                 a: 'init',
                 t: +new Date(),
                 d: {
@@ -92,18 +98,14 @@ class WatchDog {
                 }
             }, true);
 
-            this._inited = true;
+            this.isInited = true;
         }
         return this;
     }
 
-    _getRecorderId(userId) {
-        return userId + '-' + this._getFormattedDate() + '-' + this._getRandomInt(1000, 9999);
-    }
-
-    _checkObserver() {
+    _checkDependencies() {
         if (typeof WebKitMutationObserver !== 'function') {
-            logger.error('EasyRecorder requires MutationObservers.');
+            logger.error('WatchDog requires MutationObservers (which may not be supported for some old browsers).');
             return false;
         }
         return true;
@@ -119,6 +121,10 @@ class WatchDog {
         return [x, y];
     }
 
+    _generateSessionId() {
+        return this._getFormattedDate() + '-' + this._getRandomInt(1000, 9999);
+    }
+
     _getFormattedDate() {
         let d = new Date();
         d = "" + d.getFullYear() + ('0' + (d.getMonth() + 1)).slice(-2) + ('0' + d.getDate()).slice(-2) +
@@ -132,4 +138,8 @@ class WatchDog {
         return Math.floor(Math.random() * (max - min)) + min; //The maximum is exclusive and the minimum is inclusive
     }
 
+}
+
+if (typeof window === 'object' && typeof window.document === 'object') {
+    window.WatchDog = WatchDog
 }

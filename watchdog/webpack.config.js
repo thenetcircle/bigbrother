@@ -3,8 +3,8 @@ const path = require('path');
 const config = {
     entry: './src/watchdog.js',
     output: {
-        path: path.resolve(__dirname, 'dist'),
-        filename: 'bundle.js'
+        path: path.resolve(__dirname, '../bigbrother/static'),
+        filename: 'watchdog.js'
     },
     module: {
         rules: [
