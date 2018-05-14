@@ -1,9 +1,12 @@
 # Welcome to Makefile of Bigbrother
 
-dev:
-	FLASK_APP=bigbrother FLASK_DEBUG=1 pipenv run python -m flask run & cd watchdog && npm run dev && fg
+watch-be:
+	FLASK_APP=bigbrother FLASK_DEBUG=1 pipenv run python -m flask run
+
+watch-fe:
+	cd watchdog && npm run dev
 
 test:
 	@echo "test"
 
-.PHONY: test, dev
+.PHONY: test

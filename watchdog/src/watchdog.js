@@ -1,11 +1,12 @@
 import * as logger from './logger';
+import Scenario from './scenario';
 import DOMWatcher from './watcher/dom-watcher';
 import MouseWatcher from './watcher/mouse-watcher';
 import BufferedSender from './sender/buffered-sender';
 
 class WatchDog {
 
-    constructor(sceneName, context, endpoint, requestOptions = {}) {
+    constructor(endpoint, requestOptions = {}) {
         this.isInited = false;
         this.sessionId = this._generateSessionId();
         this.domWatchers = [];
@@ -13,72 +14,8 @@ class WatchDog {
         this.sender = new BufferedSender(endpoint, requestOptions);
     }
 
-    /**
-     * @param  {Element} target
-     * @returns {WatchDog}
-     */
-    watchDOM(target) {
-        if (!this._checkDependencies()) return this;
-        if (typeof target !== 'object') {
-            logger.error('watchDOM requires a target object.');
-            return this;
-        }
+    createScenario() {
 
-        try {
-            this._init();
-
-            let domWatcher = new DOMWatcher(this.sender, this.sessionId);
-            this.domWatchers.push(domWatcher);
-            domWatcher.start(target);
-        }
-        catch (e) {
-            logger.error(e.message)
-        }
-
-        return this;
-    }
-
-    /**
-     * @returns {WatchDog}
-     */
-    watchMouse() {
-        if (!this._checkDependencies()) return this;
-
-        try {
-            this._init();
-
-            if (this.mouseWatcher === null) {
-                this.mouseWatcher = new MouseWatcher(this.sender, this.sessionId);
-                this.mouseWatcher.start();
-            }
-        }
-        catch (e) {
-            console.log(logger);
-            logger.error(`watch mouse behavior failed with error: ${e}`);
-        }
-        return this;
-    }
-
-    /**
-     * @returns {WatchDog}
-     */
-    stopWatch() {
-        try {
-            if (this.domWatchers && this.domWatchers.length > 0) {
-                this.domWatchers.forEach(function (w) {
-                    w.stop();
-                });
-                this.domWatchers = [];
-            }
-            if (this.mouseWatcher !== null) {
-                this.mouseWatcher.stop();
-                this.mouseWatcher = null;
-            }
-        }
-        catch (e) {
-            logger.error(e.message)
-        }
-        return this;
     }
 
     /**
@@ -140,6 +77,4 @@ class WatchDog {
 
 }
 
-if (typeof window === 'object' && typeof window.document === 'object') {
-    window.WatchDog = WatchDog
-}
+export default WatchDog

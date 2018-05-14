@@ -1,7 +1,7 @@
 const path = require('path');
 
 const config = {
-    entry: './src/watchdog.js',
+    entry: './src/export.js',
     output: {
         path: path.resolve(__dirname, '../bigbrother/static'),
         filename: 'watchdog.js'
