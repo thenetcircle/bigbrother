@@ -1,16 +1,19 @@
 import * as logger from "./logger";
-import MouseWatcher from "./watcher/mouse-watcher";
 import DOMWatcher from "./watcher/dom-watcher";
+import MouseMovementWatcher from "./watcher/mouse-movement-watcher";
+import MouseClickWatcher from "./watcher/mouse-click-watcher";
+import MouseScrollWatcher from "./watcher/mouse-scroll-watcher";
 
 class Scenario {
 
-    constructor(watchdog, name) {
-        this.watchdog = watchdog;
+    constructor(name, buffer, context = {}) {
         this.name = name;
-        this.isInited = false;
+        this.buffer = buffer;
+        this.context = context;
 
-        this.domWatchers = [];
-        this.mouseWatcher = null;
+        this.inited = false;
+        this.watchers = [];
+        this.sequence = 0;
     }
 
     /**
@@ -27,82 +30,123 @@ class Scenario {
             return this;
         }
 
-        try {
-            this.checkIfInited();
-
-            let domWatcher = new DOMWatcher(this.sender, this.sessionId);
-            this.domWatchers.push(domWatcher);
-            domWatcher.start(target);
-        }
-        catch (e) {
-            logger.error(e.message)
-        }
-
+        this.watchers.push(new DOMWatcher(target, this));
         return this;
     }
 
     /**
-     * @returns {WatchDog}
+     * @returns {Scenario}
      */
-    watchMouseMove() {
-        if (!this._checkDependencies()) return this;
+    watchMouseMovement(target) {
+        if (!this._checkTarget(target)) {
+            logger.warn('watchMouseMovement requires a proper target.');
+            return this;
+        }
 
-        try {
-            this._init();
+        this.watchers.push(new MouseMovementWatcher(target, this));
+        return this;
+    }
 
-            if (this.mouseWatcher === null) {
-                this.mouseWatcher = new MouseWatcher(this.sender, this.sessionId);
-                this.mouseWatcher.start();
+    /**
+     * @returns {Scenario}
+     */
+    watchMouseClick(target) {
+        if (!this._checkTarget(target)) {
+            logger.warn('watchMouseClick requires a proper target.');
+            return this;
+        }
+
+        this.watchers.push(new MouseClickWatcher(target, this));
+        return this;
+    }
+
+    /**
+     * @returns {Scenario}
+     */
+    watchMouseScroll() {
+        this.watchers.push(new MouseScrollWatcher(this));
+        return this;
+    }
+
+    init() {
+        if (!this.inited) {
+
+            let env = {
+                "url": location.href,
+                "window": this._getWindowSize(),
+                "user-agent": navigator.userAgent
+            };
+
+            this.sender.send({
+                i: this.sessionId,
+                a: 'init',
+                t: +new Date(),
+                d: {
+                    "userId": this._userId,
+                    "url": location.href,
+                    "window": this._getWindowSize(),
+                    "user-agent": navigator.userAgent
+                }
+            }, true);
+
+            this.inited = true;
+        }
+    }
+
+    start() {
+        if (this.watchers.length === 0) return;
+
+        this.init();
+
+        this.watchers.forEach(watcher => {
+            try {
+                watcher.start();
             }
-        }
-        catch (e) {
-            console.log(logger);
-            logger.error(`watch mouse behavior failed with error: ${e}`);
-        }
-        return this;
-    }
-
-    checkIfInited() {
-        if (!this.isInited) {
-
-            // pass;
-
-            this.isInited = true;
-        }
-    }
-
-    start(context = {}) {
-        if (typeof context !== 'object') {
-            throw new Error('context is required as a object.');
-        }
-        this.context = context;
-
-        return this;
+            catch (e) {
+                let watcherName = typeof watcher;
+                logger.error(`Watcher ${watcherName} was failed to start with error ${e}`);
+            }
+        });
     }
 
     /**
      * @returns {WatchDog}
      */
     stop() {
-        try {
-            if (this.domWatchers && this.domWatchers.length > 0) {
-                this.domWatchers.forEach(function (w) {
-                    w.stop();
-                });
-                this.domWatchers = [];
+        this.watchers.forEach(watcher => {
+            try {
+                watcher.stop();
             }
-            if (this.mouseWatcher !== null) {
-                this.mouseWatcher.stop();
-                this.mouseWatcher = null;
+            catch (e) {
+                let watcherName = typeof watcher;
+                logger.error(`Watcher ${watcherName} was failed to stop with error ${e}`);
             }
-        }
-        catch (e) {
-            logger.error(e.message)
-        }
-        return this;
+        });
     }
 
-    _checkTarget(target) {
+    report(data) {
+        this.buffer.add(data);
+    }
+
+    getBuffer() {
+        return this.buffer;
+    }
+
+    getNextSequence() {
+        return ++this.sequence;
+    }
+
+    static _getWindowSize() {
+        let w = window,
+            d = document,
+            e = d.documentElement,
+            g = d.getElementsByTagName('body')[0],
+            x = w.innerWidth || e.clientWidth || g.clientWidth,
+            y = w.innerHeight || e.clientHeight || g.clientHeight;
+        return [x, y];
+    }
+
+    static _checkTarget(target) {
         if (typeof target !== 'object') return false;
         return true;
     }

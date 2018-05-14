@@ -1,24 +1,43 @@
-import * as logger from '../logger';
+import * as logger from './logger';
 import * as pako from 'pako/lib/deflate';
 
 class Sender {
 
     constructor(endpoint) {
-        if (typeof endpoint === 'undefined' || endpoint === '') {
-            throw new Error('The endpoint is required.')
+        if (!endpoint) {
+            throw new Error('Sender requires endpoint.')
         }
         this.endpoint = endpoint;
     }
 
-    send(metadata, data, successCallback, errorCallback, post = true, compress = true, withCredentials = false) {
+    /**
+     * @param {Array} dataList
+     * @param {function} successCallback Will be called after each of element sent successfully
+     * @param {function} failCallback Will be called after each of element sent failed
+     */
+    batchSend(dataList, successCallback, failCallback) {
+        let delimiter = '|||';
+        let dataString = '';
+
+        dataList.forEach(data => {
+            if (dataString != '') dataString += delimiter;
+            dataString += JSON.stringify(data);
+        });
+
+        if (dataString != '') {
+            this.send(dataString, successCallback, failCallback);
+        }
+    }
+
+    send(data, successCallback, failCallback, post = true, compress = true, withCredentials = false) {
         let method   = 'POST';
-        let endpoint = this.endpoint + '?m=' + this.encodeURIComponent(metadata);
+        let endpoint = this.endpoint;
         if (compress) {
-            endpoint += '&g=1';
+            endpoint += '?g=1';
             data = pako.gzip(data);
         }
 
-        logger.debug(`going to send data => url: ${endpoint}, method: ${method}, metadata: ${metadata}`);
+        logger.debug(`going to send data => url: ${endpoint}, method: ${method}`);
 
         if (window.XMLHttpRequest) {
             try {
@@ -36,7 +55,7 @@ class Sender {
                     }
                     else {
                         logger.error("Error in callback (XMLHttpRequest): " + callbackData);
-                        if (errorCallback) errorCallback(callbackData);
+                        if (failCallback) failCallback(callbackData);
                     }
                 };
                 sender.open(method, endpoint, true);
@@ -63,11 +82,11 @@ class Sender {
                         response: sender.responseText
                     };
                     logger.error("Error in callback (XDomainRequest): " + callbackData);
-                    if (errorCallback) errorCallback(callbackData);
+                    if (failCallback) failCallback(callbackData);
                 };
                 // sender.onprogress = function () {};
                 // sender.ontimeout = function () {};
-                sender.timeout = 20000;
+                sender.inactiveTimeout = 20000;
                 window.setTimeout(function () {
                     sender.send(data)
                 }, 500);

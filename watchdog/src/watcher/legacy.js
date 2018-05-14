@@ -9,32 +9,32 @@ class MouseWatcher {
         this.startupTime = +new Date();
         this.lastUpdateTime = 0;
 
-        this.recordInterval = 300;
-        this.moveTimer = null;
-        this.scrollTimer = null;
+        this.collectInterval = 300;
+        this.timer = null;
+        this.timer = null;
 
         this.scrollTrackFun = this.scrollTrack.bind(this);
         this.moveTrackFun = this.moveTrack.bind(this);
-        this.clickTrackFun = this.clickTrack.bind(this);
+        this.run = this.clickTrack.bind(this);
     }
 
     start() {
         window.addEventListener('scroll', this.scrollTrackFun);
         document.documentElement.addEventListener('mousemove', this.moveTrackFun);
-        document.documentElement.addEventListener('click', this.clickTrackFun);
+        document.documentElement.addEventListener('click', this.run);
     }
 
     stop() {
         window.removeEventListener('scroll', this.scrollTrackFun);
         document.documentElement.removeEventListener('mousemove', this.moveTrackFun);
-        document.documentElement.removeEventListener('click', this.clickTrackFun);
+        document.documentElement.removeEventListener('click', this.run);
     }
 
     scrollTrack() {
         if (!this.inactiveCheck()) return;
 
-        if (!this.scrollTimer) {
-            this.scrollTimer = setTimeout(() => {
+        if (!this.timer) {
+            this.timer = setTimeout(() => {
 
                 let data = {
                     i: this.recorderId,
@@ -43,17 +43,17 @@ class MouseWatcher {
                     d: [window.scrollX, window.scrollY]
                 };
                 this.sender.send(data);
-                this.scrollTimer = null;
+                this.timer = null;
 
-            }, this.recordInterval);
+            }, this.collectInterval);
         }
     }
 
     moveTrack(e) {
         if (!this.inactiveCheck()) return;
 
-        if (!this.moveTimer) {
-            this.moveTimer = setTimeout(() => {
+        if (!this.timer) {
+            this.timer = setTimeout(() => {
 
                 let data = {
                     i: this.recorderId,
@@ -62,9 +62,9 @@ class MouseWatcher {
                     d: [e.pageX, e.pageY]
                 };
                 this.sender.send(data);
-                this.moveTimer = null;
+                this.timer = null;
 
-            }, this.recordInterval);
+            }, this.collectInterval);
         }
     }
 

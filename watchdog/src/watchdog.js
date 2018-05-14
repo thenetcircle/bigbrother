@@ -1,51 +1,18 @@
 import * as logger from './logger';
-import Scenario from './scenario';
-import DOMWatcher from './watcher/dom-watcher';
-import MouseWatcher from './watcher/mouse-watcher';
-import BufferedSender from './sender/buffered-sender';
+import Sender from './sender';
+import Buffer from './buffer';
 
 class WatchDog {
 
-    constructor(endpoint, requestOptions = {}) {
-        this.isInited = false;
+    constructor(endpoint, bufferOptions = {}) {
+        this.inited = false;
         this.sessionId = this._generateSessionId();
-        this.domWatchers = [];
-        this.mouseWatcher = null;
-        this.sender = new BufferedSender(endpoint, requestOptions);
+        this.sender = new Sender(endpoint);
+        this.buffer = new Buffer(this.sender, bufferOptions);
     }
 
     createScenario() {
 
-    }
-
-    /**
-     * @returns {WatchDog}
-     */
-    _init() {
-        if (!this.isInited) {
-            this.sender.send({
-                i: this.sessionId,
-                a: 'init',
-                t: +new Date(),
-                d: {
-                    "userId": this._userId,
-                    "url": location.href,
-                    "window": this._getWindowSize(),
-                    "user-agent": navigator.userAgent
-                }
-            }, true);
-
-            this.isInited = true;
-        }
-        return this;
-    }
-
-    _checkDependencies() {
-        if (typeof WebKitMutationObserver !== 'function') {
-            logger.error('WatchDog requires MutationObservers (which may not be supported for some old browsers).');
-            return false;
-        }
-        return true;
     }
 
     _getWindowSize() {

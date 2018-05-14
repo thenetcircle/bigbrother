@@ -1,61 +1,44 @@
 import * as logger from '../logger';
 import TreeMirrorClient from 'mutation-summary/util/tree-mirror';
+import AbstractWatcher from './abstract-watcher';
 
-class DOMWatcher {
+class DOMWatcher extends AbstractWatcher {
 
-    constructor(sender, recorderId) {
-        this.sender = sender;
-        this.recorderId = recorderId;
-        this.startupTime = +new Date();
-        this.lastUpdateTime = 0;
+    /**
+     * @param {Element} target
+     * @param {Scenario} scenario
+     * @param {int} inactiveTimeout
+     */
+    constructor(target, scenario, inactiveTimeout = 300000) {
+        super(scenario, inactiveTimeout);
+        this.target = target;
         this.mirrorClient = null;
     }
 
-    inactiveCheck() {
-        let timeout = 300000;
-        let runningTime = (+new Date() - this.startupTime);
-        if (runningTime - this.lastUpdateTime >= timeout) {
-            this.stop();
-            return false;
+    start() {
+        if (this.mirrorClient !== null) {
+            return;
         }
-        else {
-            this.lastUpdateTime = runningTime;
-            return true;
-        }
-    }
 
-    start(target) {
-        if (this.mirrorClient !== null) return;
-        this.mirrorClient = new TreeMirrorClient(target, {
+        this.mirrorClient = new TreeMirrorClient(this.target, {
             initialize: (rootId, children) => {
-                this.sender.send({
-                    i: this.recorderId,
-                    a: 'dinit',
-                    t: +new Date(),
-                    d: [rootId, children]
-                }, true);
+                this.report('dom-init', [rootId, children]);
             },
 
             applyChanged: (removed, addedOrMoved, attributes, text) => {
-
-                if (!this.inactiveCheck()) return;
+                if (!this.checkIfExpired()) {
+                    this.stop();
+                    return;
+                }
 
                 if (removed.length || addedOrMoved.length || attributes.length || text.length) {
-                    let data = {
-                        i: this.recorderId,
-                        a: 'dchange',
-                        t: +new Date(),
-                        d: [removed, addedOrMoved, attributes, text]
-                    };
-
-                    if (!_checkChangedDOM(this.sender, data.d)) {
+                    let data = [removed, addedOrMoved, attributes, text];
+                    if (!this._checkChanges(data)) {
                         logger.debug('bypass dom changes');
                         return;
                     }
-
-                    this.sender.send(data);
+                    this.report('dom-change', data);
                 }
-
             }
         });
     }
@@ -66,74 +49,74 @@ class DOMWatcher {
         }
     }
 
-}
+    _checkChanges(data) {
+        let isStyleChanges = this._checkIsStyleChanges(data);
+        let isDomChanges = this._checkIsDomChanges(data);
 
-function _checkChangedDOM(sender, args) {
-    let isStyleChange = _checkIsStyleChange(args);
-    let isDChange = _checkIsDChange(args);
-    if (!isStyleChange && !isDChange) return true;
-    if (_checkIsIgnoredStyles(args)) return false;
+        if (!isStyleChanges && !isDomChanges) return true;
+        if (this._checkIsIgnoredStyles(data)) return false;
 
-    // check duplication
-    let buffer = sender.getBuffer();
-    for (let i = 0; i < buffer.length; i++) {
-        let oldData = buffer[i];
-        if (oldData.f !== 'dchange') continue;
-        let oldArgs = oldData.d;
-        if (
-            (isStyleChange && _checkIsStyleChange(oldArgs) && _compareAttributes(args[2], oldArgs[2]))
-            || (isDChange && _checkIsDChange(oldArgs))
-        ) {
-            oldData.d = args;
-            return false;
+        // check duplication
+        let buffer = this.scenario.getBuffer().getBuffer();
+        for (let i = 0; i < buffer.length; i++) {
+            let _data = buffer[i];
+            if (
+                (isStyleChanges && this._checkIsStyleChanges(_data) && this._compareAttributes(data[2], _data[2]))
+                ||
+                (isDomChanges && this._checkIsDomChanges(_data))
+            ) {
+                this.scenario.getBuffer().updateBuffer(i, data);
+                return false;
+            }
         }
+        return true;
     }
-    return true;
-}
 
-function _checkIsStyleChange(args) {
-    return args[0].length === 0
-        && args[1].length === 0
-        && args[2].length > 0
-        && args[3].length === 0
-        && args[2].filter(node => {
-            return node.attributes.style && _getCountOfOwnProperty(node.attributes) === 1
-        }).length === args[2].length;
-}
-
-function _checkIsIgnoredStyles(args) {
-    return args[2].filter(node => {
-        return node.attributes.style.indexOf('opacity:') !== -1
-    }).length === args[2].length;
-}
-
-function _checkIsDChange(args) {
-    return args[0].length === 0
-        && args[1].length === 0
-        && args[2].length > 0
-        && args[3].length === 0
-        && args[2].filter(node => {
-            return node.attributes.d && _getCountOfOwnProperty(node.attributes) === 1
-        }).length === args[2].length;
-}
-
-function _getCountOfOwnProperty(obj) {
-    let count = 0;
-    for (let prop in obj)
-        if (obj.hasOwnProperty(prop))
-            count++;
-    return count;
-}
-
-function _compareAttributes(attrs1, attrs2) {
-    if (attrs1.length !== attrs2.length)
-        return false;
-    for (let i = 0; i < attrs1.length; i++) {
-        let a1 = attrs1[i], a2 = attrs2[i];
-        if (a1.id !== a2.id)
-            return false
+    _checkIsStyleChanges(data) {
+        return data[0].length === 0
+            && data[1].length === 0
+            && data[2].length > 0
+            && data[3].length === 0
+            && data[2].filter(node => {
+                return node.attributes.style && this._getCountOfOwnProperty(node.attributes) === 1
+            }).length === data[2].length;
     }
-    return true
+
+    _checkIsIgnoredStyles(data) {
+        return data[2].filter(node => {
+            return node.attributes.style.indexOf('opacity:') !== -1
+        }).length === data[2].length;
+    }
+
+    _checkIsDomChanges(data) {
+        return data[0].length === 0
+            && data[1].length === 0
+            && data[2].length > 0
+            && data[3].length === 0
+            && data[2].filter(node => {
+                return node.attributes.d && this._getCountOfOwnProperty(node.attributes) === 1
+            }).length === data[2].length;
+    }
+
+    _getCountOfOwnProperty(obj) {
+        let count = 0;
+        for (let prop in obj)
+            if (obj.hasOwnProperty(prop))
+                count++;
+        return count;
+    }
+
+    _compareAttributes(attrs1, attrs2) {
+        if (attrs1.length !== attrs2.length)
+            return false;
+        for (let i = 0; i < attrs1.length; i++) {
+            let a1 = attrs1[i], a2 = attrs2[i];
+            if (a1.id !== a2.id)
+                return false
+        }
+        return true
+    }
+
 }
 
 export default DOMWatcher;
