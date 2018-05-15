@@ -3,3 +3,4 @@ venv/
 *.iml
 .pytest_cache/
 .env
+bigbrother/static/watchdog.js

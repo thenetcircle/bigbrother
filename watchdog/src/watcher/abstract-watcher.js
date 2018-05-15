@@ -28,13 +28,7 @@ class AbstractWatcher {
      * @param {mix} data
      */
     report(type, data) {
-        let _data = {
-            type: type,
-            data: data,
-            time: +new Date(),
-            seq: this.scenario.getNextSequence()
-        };
-        this.scenario.report(_data);
+        this.scenario.report(type, data);
     }
 
 }

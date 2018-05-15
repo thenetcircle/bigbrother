@@ -1,6 +1,6 @@
 import * as logger from '../logger';
-import TreeMirrorClient from 'mutation-summary/util/tree-mirror';
 import AbstractWatcher from './abstract-watcher';
+import TreeMirrorClient from '../lib/tree-mirror-client';
 
 class DOMWatcher extends AbstractWatcher {
 
@@ -34,7 +34,7 @@ class DOMWatcher extends AbstractWatcher {
                 if (removed.length || addedOrMoved.length || attributes.length || text.length) {
                     let data = [removed, addedOrMoved, attributes, text];
                     if (!this._checkChanges(data)) {
-                        logger.debug('bypass dom changes');
+                        logger.debug('duplicated dom changes, buffer has updated.');
                         return;
                     }
                     this.report('dom-change', data);
@@ -50,22 +50,33 @@ class DOMWatcher extends AbstractWatcher {
     }
 
     _checkChanges(data) {
-        let isStyleChanges = this._checkIsStyleChanges(data);
-        let isDomChanges = this._checkIsDomChanges(data);
+        if (this._checkIsStyleChanges(data)) {
 
-        if (!isStyleChanges && !isDomChanges) return true;
-        if (this._checkIsIgnoredStyles(data)) return false;
+            if (DOMWatcher._checkIsIgnoredStyles(data))
+                return false;
 
-        // check duplication
-        let buffer = this.scenario.getBuffer().getBuffer();
-        for (let i = 0; i < buffer.length; i++) {
-            let _data = buffer[i];
-            if (
-                (isStyleChanges && this._checkIsStyleChanges(_data) && this._compareAttributes(data[2], _data[2]))
-                ||
-                (isDomChanges && this._checkIsDomChanges(_data))
-            ) {
-                this.scenario.getBuffer().updateBuffer(i, data);
+            return this._checkAndUpdateBuffer(data, _data => this._checkIsStyleChanges(_data) && DOMWatcher._compareAttributes(data[2], _data[2]));
+
+        }
+        else if (this._checkIsDomChanges(data)) {
+
+            return this._checkAndUpdateBuffer(data, _data => this._checkIsDomChanges(_data));
+
+        }
+        return true;
+    }
+
+    _checkAndUpdateBuffer(newData, checkFunc) {
+        let bufferData = this.scenario.getBuffer().getBufferData();
+        for (let index = 0; index < bufferData.length; index++) {
+            let data = bufferData[index];
+            let oldData = data['data'];
+
+            if (!Array.isArray(oldData)) continue;
+
+            if (checkFunc(oldData)) {
+                data['data'] = newData;
+                this.scenario.getBuffer().updateBufferData(index, data);
                 return false;
             }
         }
@@ -78,14 +89,8 @@ class DOMWatcher extends AbstractWatcher {
             && data[2].length > 0
             && data[3].length === 0
             && data[2].filter(node => {
-                return node.attributes.style && this._getCountOfOwnProperty(node.attributes) === 1
+                return node.attributes.style && DOMWatcher._getCountOfOwnProperty(node.attributes) === 1
             }).length === data[2].length;
-    }
-
-    _checkIsIgnoredStyles(data) {
-        return data[2].filter(node => {
-            return node.attributes.style.indexOf('opacity:') !== -1
-        }).length === data[2].length;
     }
 
     _checkIsDomChanges(data) {
@@ -94,11 +99,17 @@ class DOMWatcher extends AbstractWatcher {
             && data[2].length > 0
             && data[3].length === 0
             && data[2].filter(node => {
-                return node.attributes.d && this._getCountOfOwnProperty(node.attributes) === 1
+                return node.attributes.d && DOMWatcher._getCountOfOwnProperty(node.attributes) === 1
             }).length === data[2].length;
     }
 
-    _getCountOfOwnProperty(obj) {
+    static _checkIsIgnoredStyles(data) {
+        return data[2].filter(node => {
+            return node.attributes.style.indexOf('opacity:') !== -1
+        }).length === data[2].length;
+    }
+
+    static _getCountOfOwnProperty(obj) {
         let count = 0;
         for (let prop in obj)
             if (obj.hasOwnProperty(prop))
@@ -106,7 +117,7 @@ class DOMWatcher extends AbstractWatcher {
         return count;
     }
 
-    _compareAttributes(attrs1, attrs2) {
+    static _compareAttributes(attrs1, attrs2) {
         if (attrs1.length !== attrs2.length)
             return false;
         for (let i = 0; i < attrs1.length; i++) {

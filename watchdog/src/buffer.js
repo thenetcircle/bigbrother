@@ -31,7 +31,7 @@ class Buffer {
      * @param {mixed} data
      */
     add(data) {
-        if (typeof data === 'undefined') return;
+        if (!data) return;
         this.buffer.push(data);
         this.totalSize += this._getDataSize(data);
         this._checkFlush();
@@ -40,7 +40,7 @@ class Buffer {
     /**
      * @returns {Array}
      */
-    getBuffer() {
+    getBufferData() {
         return this.buffer;
     }
 
@@ -49,14 +49,15 @@ class Buffer {
      * @param {mixed} data
      * @returns {Buffer}
      */
-    updateBuffer(index, data) {
+    updateBufferData(index, data) {
         this.buffer[index] = data;
         return this;
     }
 
     _checkFlush() {
-        if (this.pending >= this.maxPending) return;
-        if (this.errors >= this.maxErrors) return;
+        logger.debug(`checking flush, current pending: ${this.pending}, errors: ${this.errors}`);
+
+        if (this.pending >= this.maxPending || this.errors >= this.maxErrors) return;
 
         if (
             (this.buffer.length >= this.maxCount)
@@ -79,15 +80,17 @@ class Buffer {
 
         logger.debug('flushing buffered elements: ' + bufferLength);
 
-        this.pending += bufferLength;
         this.sender.batchSend(
-            this.getBuffer(),
+            this.getBufferData(),
             () => {
-                this.pending--;
+                this.pending += bufferLength;
             },
             () => {
-                this.pending--;
-                this.errors++;
+                this.pending -= bufferLength;
+            },
+            () => {
+                this.pending -= bufferLength;
+                this.errors  ++;
             }
         );
 
@@ -102,7 +105,7 @@ class Buffer {
         //     this.timer = setInterval(this.send.bind(this), this.maxTime);
         // }
         if (this.timer) clearTimeout(this.timer);
-        this.timer = setTimeout(this._checkFlush().bind(this), this.maxTime);
+        this.timer = setTimeout(this._checkFlush.bind(this), this.maxTime);
     }
 
     _getDataSize(data) {

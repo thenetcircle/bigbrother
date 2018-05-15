@@ -1,6 +1,6 @@
 import AbstractWatcher from './abstract-watcher';
 
-class MouseScrollWatcher extends AbstractWatcher {
+class ScrollWatcher extends AbstractWatcher {
 
     /**
      * @param {Scenario} scenario
@@ -39,4 +39,4 @@ class MouseScrollWatcher extends AbstractWatcher {
 
 }
 
-export default MouseScrollWatcher;
+export default ScrollWatcher;

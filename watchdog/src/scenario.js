@@ -2,12 +2,13 @@ import * as logger from "./logger";
 import DOMWatcher from "./watcher/dom-watcher";
 import MouseMovementWatcher from "./watcher/mouse-movement-watcher";
 import MouseClickWatcher from "./watcher/mouse-click-watcher";
-import MouseScrollWatcher from "./watcher/mouse-scroll-watcher";
+import ScrollWatcher from "./watcher/scroll-watcher";
 
 class Scenario {
 
     constructor(name, buffer, context = {}) {
         this.name = name;
+        this.sessionId = this._generateSessionId();
         this.buffer = buffer;
         this.context = context;
 
@@ -25,7 +26,7 @@ class Scenario {
             logger.warn('watchDOMChange requires WebKitMutationObserver support. (which may not be supported for some browsers).');
             return this;
         }
-        if (!this._checkTarget(target)) {
+        if (!Scenario._checkTarget(target)) {
             logger.warn('watchDOMChange requires a proper target.');
             return this;
         }
@@ -38,7 +39,7 @@ class Scenario {
      * @returns {Scenario}
      */
     watchMouseMovement(target) {
-        if (!this._checkTarget(target)) {
+        if (!Scenario._checkTarget(target)) {
             logger.warn('watchMouseMovement requires a proper target.');
             return this;
         }
@@ -51,7 +52,7 @@ class Scenario {
      * @returns {Scenario}
      */
     watchMouseClick(target) {
-        if (!this._checkTarget(target)) {
+        if (!Scenario._checkTarget(target)) {
             logger.warn('watchMouseClick requires a proper target.');
             return this;
         }
@@ -63,32 +64,23 @@ class Scenario {
     /**
      * @returns {Scenario}
      */
-    watchMouseScroll() {
-        this.watchers.push(new MouseScrollWatcher(this));
+    watchScroll() {
+        this.watchers.push(new ScrollWatcher(this));
         return this;
     }
 
     init() {
         if (!this.inited) {
-
-            let env = {
-                "url": location.href,
-                "window": this._getWindowSize(),
-                "user-agent": navigator.userAgent
+            let envInfo = {
+                'session-id': this.sessionId,
+                'uri': location.href,
+                'window-size': Scenario._getWindowSize(),
+                'user-agent': navigator.userAgent,
+                'cookie': document.cookie
             };
 
-            this.sender.send({
-                i: this.sessionId,
-                a: 'init',
-                t: +new Date(),
-                d: {
-                    "userId": this._userId,
-                    "url": location.href,
-                    "window": this._getWindowSize(),
-                    "user-agent": navigator.userAgent
-                }
-            }, true);
-
+            let initData = Object.assign({}, envInfo, this.context);
+            this.report('scenario-init', initData);
             this.inited = true;
         }
     }
@@ -103,7 +95,7 @@ class Scenario {
                 watcher.start();
             }
             catch (e) {
-                let watcherName = typeof watcher;
+                let watcherName = typeof watcher === 'object' ? watcher.constructor.name : '';
                 logger.error(`Watcher ${watcherName} was failed to start with error ${e}`);
             }
         });
@@ -118,22 +110,34 @@ class Scenario {
                 watcher.stop();
             }
             catch (e) {
-                let watcherName = typeof watcher;
+                let watcherName = typeof watcher === 'object' ? watcher.constructor.name : '';
                 logger.error(`Watcher ${watcherName} was failed to stop with error ${e}`);
             }
         });
     }
 
-    report(data) {
-        this.buffer.add(data);
+    /**
+     * @param {string} type
+     * @param {mix} data
+     */
+    report(type, data) {
+        let _data = {
+            type: type,
+            data: data,
+            time: +new Date(),
+            seq: ++this.sequence,
+            session: this.sessionId
+        };
+
+        this.buffer.add(_data);
     }
 
     getBuffer() {
         return this.buffer;
     }
 
-    getNextSequence() {
-        return ++this.sequence;
+    _generateSessionId() {
+        return this.name + '-' + Scenario._getFormattedDate() + '-' + Scenario._getRandomInt(1000, 9999);
     }
 
     static _getWindowSize() {
@@ -151,4 +155,19 @@ class Scenario {
         return true;
     }
 
+    static _getFormattedDate() {
+        let d = new Date();
+        d = "" + d.getFullYear() + ('0' + (d.getMonth() + 1)).slice(-2) + ('0' + d.getDate()).slice(-2) +
+            ('0' + d.getHours()).slice(-2) + ('0' + d.getMinutes()).slice(-2) + ('0' + d.getSeconds()).slice(-2);
+        return d;
+    }
+
+    static _getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min)) + min; //The maximum is exclusive and the minimum is inclusive
+    }
+
 }
+
+export default Scenario;

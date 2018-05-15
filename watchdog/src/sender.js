@@ -12,63 +12,69 @@ class Sender {
 
     /**
      * @param {Array} dataList
-     * @param {function} successCallback Will be called after each of element sent successfully
-     * @param {function} failCallback Will be called after each of element sent failed
+     * @param {function} preCallback calls before sending
+     * @param {function} successCallback calls after sending successfully
+     * @param {function} errorCallback calls after sending failed
      */
-    batchSend(dataList, successCallback, failCallback) {
+    batchSend(dataList, preCallback = () => {}, successCallback = () => {}, errorCallback = () => {}) {
         let delimiter = '|||';
         let dataString = '';
 
         dataList.forEach(data => {
-            if (dataString != '') dataString += delimiter;
+            if (dataString !== '') dataString += delimiter;
             dataString += JSON.stringify(data);
         });
 
-        if (dataString != '') {
-            this.send(dataString, successCallback, failCallback);
+        if (dataString !== '') {
+            this.send(dataString, preCallback, successCallback, errorCallback);
         }
     }
 
-    send(data, successCallback, failCallback, post = true, compress = true, withCredentials = false) {
+    send(data, preCallback = () => {}, successCallback = () => {}, errorCallback = () => {}, post = true, compress = true, withCredentials = false) {
         let method   = 'POST';
         let endpoint = this.endpoint;
         if (compress) {
-            endpoint += '?g=1';
+            endpoint += ((endpoint.indexOf('?') !== -1) ? '&' : '') + 'g=1';
             data = pako.gzip(data);
         }
 
-        logger.debug(`going to send data => url: ${endpoint}, method: ${method}`);
+        logger.debug(`going to send data to: ${endpoint}, with params: post ${post}, compress ${compress}, withCredentials: ${withCredentials}`);
 
         if (window.XMLHttpRequest) {
             try {
-                sender = new window.XMLHttpRequest();
+                let sender = new window.XMLHttpRequest();
                 sender.onreadystatechange = () => {
                     if (sender.readyState !== 4 || !sender.status)
                         return;
 
-                    const callbackData = {
+                    const context = {
                         status: sender.status,
                         response: sender.response
                     };
                     if (sender.status >= 200 && sender.status < 300) {
-                        if (successCallback) successCallback(callbackData);
+                        if (successCallback) {
+                            successCallback(context);
+                        }
                     }
                     else {
-                        logger.error("Error in callback (XMLHttpRequest): " + callbackData);
-                        if (failCallback) failCallback(callbackData);
+                        logger.warn(`Unexpected HTTP Response (XMLHttpRequest), Status: ${sender.status}, Response: ${sender.response}`);
+                        if (errorCallback) {
+                            errorCallback(context);
+                        }
                     }
                 };
                 sender.open(method, endpoint, true);
                 sender.setRequestHeader("Content-type", "text/plain");
                 sender.withCredentials = !!withCredentials;
+                preCallback({});
                 sender.send(data);
             } catch (e) {
-                logger.error("Error in transmission (XMLHttpRequest): " + e.message);
+                logger.error("Sending HTTP Request (XMLHttpRequest) Failed With Error: " + e.message);
             }
         }
         else if (window.XDomainRequest) {
             try {
-                sender = new window.XDomainRequest();
+                let sender = new window.XDomainRequest();
                 sender.open(method, endpoint);
                 sender.onload = function () {
                     if (successCallback) {
@@ -78,20 +84,23 @@ class Sender {
                     }
                 };
                 sender.onerror = function () {
-                    const callbackData = {
+                    const context = {
                         response: sender.responseText
                     };
-                    logger.error("Error in callback (XDomainRequest): " + callbackData);
-                    if (failCallback) failCallback(callbackData);
+                    logger.warn(`Sending HTTP Request (XDomainRequest) Failed With Response: ${sender.responseText}`);
+                    if (errorCallback) {
+                        errorCallback(context);
+                    }
                 };
                 // sender.onprogress = function () {};
                 // sender.ontimeout = function () {};
                 sender.inactiveTimeout = 20000;
                 window.setTimeout(function () {
-                    sender.send(data)
+                    preCallback({});
+                    sender.send(data);
                 }, 500);
             } catch (e) {
-                logger.error("Error in transmission (XDomainRequest): " + e.message);
+                logger.error("Sending HTTP Request (XDomainRequest) Failed With Error: " + e.message);
             }
         }
     }
