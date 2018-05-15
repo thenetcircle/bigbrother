@@ -30,15 +30,15 @@ class Sender {
         }
     }
 
-    send(data, preCallback = () => {}, successCallback = () => {}, errorCallback = () => {}, post = true, compress = true, withCredentials = false) {
+    send(data, preCallback = () => {}, successCallback = () => {}, errorCallback = () => {}, compress = true, withCredentials = false) {
         let method   = 'POST';
         let endpoint = this.endpoint;
         if (compress) {
-            endpoint += ((endpoint.indexOf('?') !== -1) ? '&' : '') + 'g=1';
+            endpoint += ((endpoint.indexOf('?') !== -1) ? '&' : '?') + 'g=1';
             data = pako.gzip(data);
         }
 
-        logger.debug(`going to send data to: ${endpoint}, with params: post ${post}, compress ${compress}, withCredentials: ${withCredentials}`);
+        logger.debug(`going to send data to: ${endpoint}, with params: compress ${compress}, withCredentials: ${withCredentials}`);
 
         if (window.XMLHttpRequest) {
             try {

@@ -2,10 +2,10 @@
 <html lang="en-US">
   <head>
     <title>BigBrother Test Page</title>
-    <script src="http://localhost:8080/watchdog.js"></script>
+    <script src="/static/watchdog.js"></script>
     <script>
 
-      var watchdog = new WatchDog('http://localhost:5000/endpoint');
+      var watchdog = new WatchDog('/api/beehive');
       var scenario = watchdog.createScenario('test');
       scenario
           .watchDOMChange(document)

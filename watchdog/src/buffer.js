@@ -55,9 +55,10 @@ class Buffer {
     }
 
     _checkFlush() {
-        logger.debug(`checking flush, current pending: ${this.pending}, errors: ${this.errors}`);
-
-        if (this.pending >= this.maxPending || this.errors >= this.maxErrors) return;
+        if (this.pending >= this.maxPending || this.errors >= this.maxErrors) {
+            logger.warn(`either pending number: ${this.pending} or errors number: ${this.errors} has exceeded the maximum amount.`);
+            return;
+        }
 
         if (
             (this.buffer.length >= this.maxCount)

@@ -4,7 +4,7 @@
   "description": "a subcomponent of bigbrother, which for watching and reporting the end users' actions",
   "main": "src/watchdog.js",
   "scripts": {
-    "dev": "webpack-dev-server --mode development",
+    "dev": "webpack --mode development --watch",
     "prod": "webpack --mode production"
   },
   "author": "baineng <baineng.ma@gmail.com>",
@@ -13,8 +13,7 @@
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.4",
     "webpack": "^4.5.0",
-    "webpack-cli": "^2.0.14",
-    "webpack-dev-server": "^3.1.3"
+    "webpack-cli": "2.1.3"
   },
   "dependencies": {
     "loglevel": "1.6.1",
