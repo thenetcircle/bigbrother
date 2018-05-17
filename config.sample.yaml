@@ -1,0 +1,9 @@
+channel:
+    type: kafka
+    params:
+        topics_mapping:
+            topic1: verb
+        producer_config:
+            bootstrap-servers: xxx
+        consumer_config:
+            bootstrap-servers: xxx
