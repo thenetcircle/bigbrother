@@ -3,4 +3,4 @@ venv/
 *.iml
 .pytest_cache/
 .env
-bigbrother/static/watchdog.js
+bigbrother/static/bigbrother-agent.js

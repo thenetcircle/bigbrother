@@ -2,11 +2,11 @@
 <html lang="en-US">
   <head>
     <title>BigBrother Test Page</title>
-    <script src="/static/watchdog.js"></script>
+    <script src="/static/bigbrother-agent.js"></script>
     <script>
 
-      var watchdog = new WatchDog('/api/beehive');
-      var scenario = watchdog.createScenario('test');
+      var agent = new BigBrotherAgent('/api/beehive');
+      var scenario = agent.createScenario('test');
       scenario
           .watchDOMChange(document)
           .watchMouseMovement(document)

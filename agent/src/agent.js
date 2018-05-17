@@ -3,7 +3,7 @@ import Sender from './sender';
 import Buffer from './buffer';
 import Scenario from './scenario';
 
-class WatchDog {
+class BigBrotherAgent {
 
     constructor(endpoint, bufferOptions = {}) {
         this.sender = new Sender(endpoint);
@@ -16,4 +16,4 @@ class WatchDog {
 
 }
 
-export default WatchDog
+export default BigBrotherAgent

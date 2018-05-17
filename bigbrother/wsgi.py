@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """
-bigbrother.app
-~~~~~~~~~~~~
+  bigbrother.wsgi
+  ~~~~~~~~~~~~
 
-Providers the entrance
+  web entrance
 """
 
 import os
@@ -18,9 +16,11 @@ templateDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'template
 app = Flask(__name__, template_folder=templateDir)
 app.debug = bool(os.environ.get('DEBUG'))
 
+
 @app.route('/')
 def home():
     return 'this is the home page3'
+
 
 @app.route('/api/beehive', methods=['POST'])
 def beehive():
@@ -35,6 +35,7 @@ def beehive():
         print(record)
 
     return 'done'
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

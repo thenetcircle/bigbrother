@@ -4,7 +4,7 @@ const config = {
     entry: './src/export.js',
     output: {
         path: path.resolve(__dirname, '../bigbrother/static'),
-        filename: 'watchdog.js'
+        filename: 'bigbrother-agent.js'
     },
     module: {
         rules: [

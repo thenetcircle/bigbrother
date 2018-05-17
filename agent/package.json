@@ -1,8 +1,8 @@
 {
-  "name": "watchdog",
+  "name": "agent",
   "version": "0.0.1",
   "description": "a subcomponent of bigbrother, which for watching and reporting the end users' actions",
-  "main": "src/watchdog.js",
+  "main": "src/agent.js",
   "scripts": {
     "dev": "webpack --mode development --watch",
     "prod": "webpack --mode production"
