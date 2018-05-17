@@ -13,4 +13,4 @@
 
 class Constants:
 
-    pass
+    ENV_CONFIGFILE = 'BIGBROTHER_CONFIG'

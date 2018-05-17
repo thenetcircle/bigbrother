@@ -13,17 +13,24 @@
 import unittest
 import os
 
+from bigbrother.constants import Constants
+
 
 class ConfigTest(unittest.TestCase):
 
     def setUp(self):
-        test_configfile = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fixtures', 'config.test.yaml')
-        os.environ.setdefault('BIGBROTHER_CONFIG', test_configfile)
+        self.test_configfile = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fixtures', 'config.test.yaml')
+        os.environ.setdefault(Constants.ENV_CONFIGFILE, self.test_configfile)
+
         from bigbrother.config import config
         self.config = config
 
-    def test_loadconfig(self):
-        self.assertEqual(1, 1)
+    def test_load(self):
+        self.assertEqual(self.config.get_configfile(), self.test_configfile)
+
+    def test_get(self):
+        self.assertEqual(self.config.get('channel.type'), 'kafka')
+        self.assertEqual(self.config.get('channel.params.topics_mapping'), { 'topic1': 'verb' })
 
 
 if __name__ == '__main__':

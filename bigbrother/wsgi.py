@@ -15,9 +15,9 @@ import argparse
 import gzip
 
 from flask import Flask, request
-from .utils import app_path
+from .utils import Utils
 
-templateDir = app_path('templates')
+templateDir = Utils.app_path('templates')
 
 app = Flask(__name__, template_folder=templateDir)
 app.debug = bool(os.environ.get('DEBUG'))

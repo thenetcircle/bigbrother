@@ -13,6 +13,8 @@
 import os
 
 
-def app_path(*paths):
-    """returns a path based on the app's root path """
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), *paths)
+class Utils:
+
+    def app_path(*paths):
+        """returns a path based on the app's root path """
+        return os.path.join(os.path.dirname(os.path.abspath(__file__)), *paths)
