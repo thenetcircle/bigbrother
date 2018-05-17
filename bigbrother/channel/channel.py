@@ -20,7 +20,7 @@ class Channel:
 
         :param elem:
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def pull(self):
         """
@@ -28,4 +28,4 @@ class Channel:
 
         :return: the elem
         """
-        raise NotImplementedError()
+        raise NotImplementedError
