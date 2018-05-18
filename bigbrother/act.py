@@ -11,3 +11,31 @@
 # limitations under the License.
 
 import json
+
+
+class IllegalRequest(Exception):
+    pass
+
+
+class Act:
+
+    @staticmethod
+    def fromRequest(request_data):
+        assert request_data
+        request_obj = json.loads(request_data)
+
+    def __init__(self, sid, seq, verb, time=None, data=None, raw=None):
+        """expresses the acts in Scenario
+
+        :param str sid: a session id ties these serial of acts
+        :param str seq: sequence numbers of this act in the session
+        :param str verb: the verb of the act
+        :param str time: the act happens time
+        :param dict data: data of the act
+        """
+        self.sid = sid
+        self.seq = seq
+        self.verb = verb
+        self.time = time
+        self.data = data if data is not None else {}
+        self.raw = raw
