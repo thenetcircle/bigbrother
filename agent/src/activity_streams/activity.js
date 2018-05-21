@@ -194,7 +194,7 @@ Activity.prototype.setVerb = function (verb) {
  * @returns {object}
  */
 Activity.prototype.getContext = function () {
-    return typeof this.data.context !== 'undefined' ? this.data.context : {};
+    return typeof this.data.context !== 'undefined' ? this.data.metadata : {};
 };
 /**
  * @param {object} context

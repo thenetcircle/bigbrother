@@ -6,13 +6,13 @@ import ScrollWatcher from "./watcher/scroll-watcher";
 
 class Scenario {
 
-    constructor(name, buffer, context = {}) {
+    constructor(name, buffer, metadata = {}) {
         this.name = name;
-        this.sessionId = this._generateSessionId();
         this.buffer = buffer;
-        this.context = context;
+        this.metadata = metadata;
 
-        this.inited = false;
+        this.sessionId = this._generateSessionId();
+        this.sessionInited = false;
         this.watchers = [];
         this.sequence = 0;
     }
@@ -69,26 +69,26 @@ class Scenario {
         return this;
     }
 
-    init() {
-        if (!this.inited) {
+    initSession() {
+        if (!this.sessionInited) {
             let envInfo = {
-                'session-id': this.sessionId,
                 'uri': location.href,
                 'window-size': Scenario._getWindowSize(),
                 'user-agent': navigator.userAgent,
                 'cookie': document.cookie
             };
 
-            let initData = Object.assign({}, envInfo, this.context);
-            this.report('scenario-init', initData);
-            this.inited = true;
+            let initData = Object.assign({}, envInfo, this.metadata);
+            this.report('sess-init', initData);
+            this.sessionInited = true;
+            this.sequence = 0;
         }
     }
 
     start() {
         if (this.watchers.length === 0) return;
 
-        this.init();
+        this.initSession();
 
         this.watchers.forEach(watcher => {
             try {
@@ -102,7 +102,7 @@ class Scenario {
     }
 
     /**
-     * @returns {WatchDog}
+     * @returns {Scenario}
      */
     stop() {
         this.watchers.forEach(watcher => {
@@ -117,16 +117,16 @@ class Scenario {
     }
 
     /**
-     * @param {string} type
-     * @param {mix} data
+     * @param {string} verb
+     * @param {mixed} data
      */
-    report(type, data) {
+    report(verb, data) {
         let _data = {
-            type: type,
-            data: data,
-            time: +new Date(),
+            sid: this.sessionId,
             seq: ++this.sequence,
-            session: this.sessionId
+            type: verb,
+            time: +new Date(),
+            data: data
         };
 
         this.buffer.add(_data);

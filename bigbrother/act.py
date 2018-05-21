@@ -13,18 +13,15 @@
 import json
 
 
-class IllegalRequest(Exception):
-    pass
-
-
 class Act:
 
     @staticmethod
-    def fromRequest(request_data):
-        assert request_data
-        request_obj = json.loads(request_data)
+    def from_request(raw_str):
+        assert type(raw_str) in (str, bytes, bytearray) and raw_str != ''
+        raw_obj = json.loads(raw_str)
+        return Act(raw_obj['sid'], raw_obj['seq'], raw_obj['verb'], raw_obj['time'], raw_obj['data'], raw_str)
 
-    def __init__(self, sid, seq, verb, time=None, data=None, raw=None):
+    def __init__(self, sid, seq, verb, time=None, data=None, raw_str=None):
         """expresses the acts in Scenario
 
         :param str sid: a session id ties these serial of acts
@@ -38,4 +35,4 @@ class Act:
         self.verb = verb
         self.time = time
         self.data = data if data is not None else {}
-        self.raw = raw
+        self.raw_str = raw_str

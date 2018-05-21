@@ -24,11 +24,11 @@ class AbstractWatcher {
     }
 
     /**
-     * @param {string} type
+     * @param {string} verb
      * @param {mix} data
      */
-    report(type, data) {
-        this.scenario.report(type, data);
+    report(verb, data) {
+        this.scenario.report(verb, data);
     }
 
 }
