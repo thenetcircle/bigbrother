@@ -5,13 +5,13 @@
     <script src="/static/bigbrother-agent.js"></script>
     <script>
 
-      var agent = new BigBrotherAgent('/api/beehive');
-      var scenario = agent.createScenario('test');
-      scenario
-          .watchDOMChange(document)
-          .watchMouseMovement(document)
-          .watchMouseClick(document)
-          .watchScroll()
+      var bbagent = new BigBrother.Agent('/api/beehive', {a:1, b:2});
+      var bbscenario = bbagent.getScenario('test', {b:3, c:4});
+      bbscenario
+          .addWatcher(new BigBrother.DOMWatcher(document))
+          .addWatcher(new BigBrother.MouseMovementWatcher(document))
+          .addWatcher(new BigBrother.MouseClickWatcher(document))
+          .addWatcher(new BigBrother.ScrollWatcher())
           .start();
 
       function toggle(id) {

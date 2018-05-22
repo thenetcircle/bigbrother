@@ -3,14 +3,12 @@ import AbstractWatcher from './abstract-watcher';
 class ScrollWatcher extends AbstractWatcher {
 
     /**
-     * @param {Scenario} scenario
-     * @param {int} collectInterval
-     * @param {int} inactiveTimeout
+     * @param {int} collectingInterval
      */
-    constructor(scenario, collectInterval = 300, inactiveTimeout = 300000) {
-        super(scenario, inactiveTimeout);
+    constructor(collectingInterval = 300) {
+        super();
 
-        this.collectInterval = collectInterval;
+        this.collectingInterval = collectingInterval;
         this.timer = null;
         this.run = this.run.bind(this)
     }
@@ -24,7 +22,7 @@ class ScrollWatcher extends AbstractWatcher {
     }
 
     run(event) {
-        if (!this.checkIfExpired()) {
+        if (!this.checkMaxIdleTime()) {
             this.stop();
             return;
         }
@@ -33,7 +31,7 @@ class ScrollWatcher extends AbstractWatcher {
             this.timer = setTimeout(() => {
                 this.report('scroll', [window.scrollX, window.scrollY]);
                 this.timer = null;
-            }, this.collectInterval);
+            }, this.collectingInterval);
         }
     }
 

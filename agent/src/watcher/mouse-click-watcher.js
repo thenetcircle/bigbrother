@@ -1,14 +1,19 @@
 import AbstractWatcher from './abstract-watcher';
+import Utils from '../utils';
 
 class MouseClickWatcher extends AbstractWatcher {
 
     /**
      * @param {Element} target
-     * @param {Scenario} scenario
-     * @param {int} inactiveTimeout
      */
-    constructor(target, scenario, inactiveTimeout = 300000) {
-        super(scenario, inactiveTimeout);
+    constructor(target) {
+        super();
+
+        if (!Utils.checkElement(target)) {
+            throw new Error(
+                'MouseClickWatcher requires a proper target.'
+            );
+        }
 
         this.target = target;
         this.run = this.run.bind(this)
@@ -23,7 +28,7 @@ class MouseClickWatcher extends AbstractWatcher {
     }
 
     run(event) {
-        if (!this.checkIfExpired()) {
+        if (!this.checkMaxIdleTime()) {
             this.stop();
             return;
         }

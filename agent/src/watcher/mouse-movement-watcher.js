@@ -1,18 +1,23 @@
 import AbstractWatcher from './abstract-watcher';
+import Utils from '../utils';
 
 class MouseMovementWatcher extends AbstractWatcher {
 
     /**
      * @param {Element} target
-     * @param {Scenario} scenario
-     * @param {int} collectInterval
-     * @param {int} inactiveTimeout
+     * @param {int} collectingInterval
      */
-    constructor(target, scenario, collectInterval = 300, inactiveTimeout = 300000) {
-        super(scenario, inactiveTimeout);
+    constructor(target, collectingInterval = 300) {
+        super();
+
+        if (!Utils.checkElement(target)) {
+            throw new Error(
+                'MouseMovementWatcher requires a proper target.'
+            );
+        }
 
         this.target = target;
-        this.collectInterval = collectInterval;
+        this.collectingInterval = collectingInterval;
 
         this.timer = null;
         this.run = this.run.bind(this)
@@ -27,7 +32,7 @@ class MouseMovementWatcher extends AbstractWatcher {
     }
 
     run(event) {
-        if (!this.checkIfExpired()) {
+        if (!this.checkMaxIdleTime()) {
             this.stop();
             return;
         }
@@ -36,7 +41,7 @@ class MouseMovementWatcher extends AbstractWatcher {
             this.timer = setTimeout(() => {
                 this.report('move', [event.pageX, event.pageY]);
                 this.timer = null;
-            }, this.collectInterval);
+            }, this.collectingInterval);
         }
     }
 

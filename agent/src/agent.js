@@ -1,19 +1,30 @@
-import * as logger from './logger';
-import Sender from './sender';
-import Buffer from './buffer';
+import BufferedSender from './sender/buffered-sender';
 import Scenario from './scenario';
 
-class BigBrotherAgent {
+class Agent {
 
-    constructor(endpoint, bufferOptions = {}) {
-        this.sender = new Sender(endpoint);
-        this.buffer = new Buffer(this.sender, bufferOptions);
+    /**
+     * @param {string} endpoint
+     * @param {object} metadata
+     * @param {object} senderOptions
+     */
+    constructor(endpoint, metadata = {}, senderOptions = {}) {
+        this.sender = new BufferedSender(endpoint, senderOptions);
+        this.metadata = metadata;
     }
 
-    createScenario(name, context = {}) {
-        return new Scenario(name, this.buffer, context);
+    /**
+     * create or get a scenario with specific scenario name and metadata
+     *
+     * @param {string} name scenario name
+     * @param {object} metadata scenario metadata / context
+     * @return {Scenario}
+     */
+    getScenario(name, metadata = {}) {
+        let scenarioMetadata = Object.assign({}, this.metadata, metadata);
+        return new Scenario(name, this.sender, scenarioMetadata);
     }
 
 }
 
-export default BigBrotherAgent
+export default Agent

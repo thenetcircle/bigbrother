@@ -1,11 +1,11 @@
-import * as logger from './logger';
+import * as logger from '../logger';
 import * as pako from 'pako/lib/deflate';
 
-class Sender {
+class CompressibleSender {
 
     constructor(endpoint) {
         if (!endpoint) {
-            throw new Error('Sender requires endpoint.')
+            throw new Error('CompressibleSender requires EndPoint!')
         }
         this.endpoint = endpoint;
     }
@@ -116,4 +116,4 @@ class Sender {
 
 }
 
-export default Sender;
+export default CompressibleSender;

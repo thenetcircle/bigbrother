@@ -1,94 +1,37 @@
 import * as logger from "./logger";
-import DOMWatcher from "./watcher/dom-watcher";
-import MouseMovementWatcher from "./watcher/mouse-movement-watcher";
-import MouseClickWatcher from "./watcher/mouse-click-watcher";
-import ScrollWatcher from "./watcher/scroll-watcher";
+import AbstractWatcher from "./watcher/abstract-watcher";
+import Utils from './utils';
 
 class Scenario {
 
-    constructor(name, buffer, metadata = {}) {
+    constructor(name, sender, metadata = {}) {
         this.name = name;
-        this.buffer = buffer;
+        this.sender = sender;
         this.metadata = metadata;
 
-        this.sessionId = this._generateSessionId();
-        this.sessionInited = false;
+        this.running = false;
         this.watchers = [];
+        this.sessionId = '';
         this.sequence = 0;
     }
 
     /**
-     * @param  {Element} target
-     * @returns {Scenario}
+     * runs the scenario with a new session
      */
-    watchDOMChange(target) {
-        if (typeof WebKitMutationObserver !== 'function') {
-            logger.warn('watchDOMChange requires WebKitMutationObserver support. (which may not be supported for some browsers).');
-            return this;
-        }
-        if (!Scenario._checkTarget(target)) {
-            logger.warn('watchDOMChange requires a proper target.');
-            return this;
-        }
-
-        this.watchers.push(new DOMWatcher(target, this));
-        return this;
-    }
-
-    /**
-     * @returns {Scenario}
-     */
-    watchMouseMovement(target) {
-        if (!Scenario._checkTarget(target)) {
-            logger.warn('watchMouseMovement requires a proper target.');
-            return this;
-        }
-
-        this.watchers.push(new MouseMovementWatcher(target, this));
-        return this;
-    }
-
-    /**
-     * @returns {Scenario}
-     */
-    watchMouseClick(target) {
-        if (!Scenario._checkTarget(target)) {
-            logger.warn('watchMouseClick requires a proper target.');
-            return this;
-        }
-
-        this.watchers.push(new MouseClickWatcher(target, this));
-        return this;
-    }
-
-    /**
-     * @returns {Scenario}
-     */
-    watchScroll() {
-        this.watchers.push(new ScrollWatcher(this));
-        return this;
-    }
-
-    initSession() {
-        if (!this.sessionInited) {
-            let envInfo = {
-                'uri': location.href,
-                'window-size': Scenario._getWindowSize(),
-                'user-agent': navigator.userAgent,
-                'cookie': document.cookie
-            };
-
-            let initData = Object.assign({}, envInfo, this.metadata);
-            this.report('sess-init', initData);
-            this.sessionInited = true;
-            this.sequence = 0;
-        }
-    }
-
     start() {
-        if (this.watchers.length === 0) return;
+        if (this.watchers.length === 0) {
+            logger.warn(`the scenario ${this.name} has no watchers, will not run.`);
+            return;
+        }
+        if (this.running) {
+            logger.warn(`the scenario ${this.name} is running already.`);
+            return;
+        }
 
-        this.initSession();
+        this.running = true;
+        this.sessionId = this._generateSessionId();
+
+        this._initSession();
 
         this.watchers.forEach(watcher => {
             try {
@@ -102,9 +45,17 @@ class Scenario {
     }
 
     /**
-     * @returns {Scenario}
+     * stops the running scenario
      */
     stop() {
+        if (!this.running) {
+            logger.warn(`the scenario ${this.name} is not running.`);
+            return;
+        }
+
+        this.running = false;
+        this.sessionId = '';
+
         this.watchers.forEach(watcher => {
             try {
                 watcher.stop();
@@ -117,55 +68,102 @@ class Scenario {
     }
 
     /**
-     * @param {string} verb
-     * @param {mixed} data
+     * runs the scenario with a existed session
+     *
+     * @param {string} sessionId
+     */
+    recover(sessionId) {
+        if (this.running) {
+            logger.warn(`the scenario ${this.name} is still running, stop it before recovering.`);
+            return;
+        }
+
+        this.running = true;
+        this.sessionId = sessionId;
+
+        this.watchers.forEach(watcher => {
+            try {
+                watcher.start();
+            }
+            catch (e) {
+                let watcherName = typeof watcher === 'object' ? watcher.constructor.name : '';
+                logger.error(`Watcher ${watcherName} was failed to recover with error ${e}`);
+            }
+        });
+    }
+
+    /**
+     * reports collected data to the sender
+     *
+     * @param {string} verb the verb of the act
+     * @param {object|array|string} data the data of the act
      */
     report(verb, data) {
         let _data = {
             sid: this.sessionId,
             seq: ++this.sequence,
-            type: verb,
+            verb: verb,
             time: +new Date(),
             data: data
         };
 
-        this.buffer.add(_data);
+        this.sender.send(_data);
     }
 
-    getBuffer() {
-        return this.buffer;
+    /**
+     * sets new metadata during scenario running
+     *
+     * @param {object} metadata
+     * @returns {Scenario}
+     */
+    setMetadata(metadata) {
+        if (!this.running) {
+            logger.warn('Metadata can not be set when Scenario is stopped.')
+            return this;
+        }
+        if (!this._checkMetadata(metadata)) {
+            logger.warn('Metadata can not be set because it is invalid format.')
+            return this;
+        }
+
+        this.report('set-metadata', metadata);
+        return this;
+    }
+
+    /**
+     * adds a new watcher to the scenario
+     *
+     * @param {AbstractWatcher} watcher
+     * @returns {Scenario}
+     */
+    addWatcher(watcher) {
+        if (!watcher instanceof AbstractWatcher) {
+            logger.warn('could not add watcher, it should extend {AbstractWatcher}.');
+            return this;
+        }
+
+        this.watchers.push(watcher.withScenario(this));
+        return this;
+    }
+
+    /**
+     * @returns {BufferedSender}
+     */
+    getSender() {
+        return this.sender;
+    }
+
+    _initSession() {
+        this.report('sess-init', this.metadata);
+        this.sequence = 0;
     }
 
     _generateSessionId() {
-        return this.name + '-' + Scenario._getFormattedDate() + '-' + Scenario._getRandomInt(1000, 9999);
+        return this.name + '-' + Utils.getFormattedDate() + '-' + Utils.getRandomInt(1000, 9999);
     }
 
-    static _getWindowSize() {
-        let w = window,
-            d = document,
-            e = d.documentElement,
-            g = d.getElementsByTagName('body')[0],
-            x = w.innerWidth || e.clientWidth || g.clientWidth,
-            y = w.innerHeight || e.clientHeight || g.clientHeight;
-        return [x, y];
-    }
-
-    static _checkTarget(target) {
-        if (typeof target !== 'object') return false;
-        return true;
-    }
-
-    static _getFormattedDate() {
-        let d = new Date();
-        d = "" + d.getFullYear() + ('0' + (d.getMonth() + 1)).slice(-2) + ('0' + d.getDate()).slice(-2) +
-            ('0' + d.getHours()).slice(-2) + ('0' + d.getMinutes()).slice(-2) + ('0' + d.getSeconds()).slice(-2);
-        return d;
-    }
-
-    static _getRandomInt(min, max) {
-        min = Math.ceil(min);
-        max = Math.floor(max);
-        return Math.floor(Math.random() * (max - min)) + min; //The maximum is exclusive and the minimum is inclusive
+    static _checkMetadata(metadata) {
+        return typeof metadata === 'object';
     }
 
 }

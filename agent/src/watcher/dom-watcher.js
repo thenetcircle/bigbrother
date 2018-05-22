@@ -1,16 +1,28 @@
 import * as logger from '../logger';
 import AbstractWatcher from './abstract-watcher';
 import TreeMirrorClient from '../lib/tree-mirror-client';
+import Utils from '../utils';
 
 class DOMWatcher extends AbstractWatcher {
 
     /**
      * @param {Element} target
-     * @param {Scenario} scenario
-     * @param {int} inactiveTimeout
      */
-    constructor(target, scenario, inactiveTimeout = 300000) {
-        super(scenario, inactiveTimeout);
+    constructor(target) {
+        super();
+
+        if (typeof WebKitMutationObserver !== 'function') {
+            throw new Error(
+                'DOMWatcher requires WebKitMutationObserver (it is not supported by you browser).'
+            );
+        }
+
+        if (!Utils.checkElement(target)) {
+            throw new Error(
+                'DOMWatcher requires a proper root target.'
+            );
+        }
+
         this.target = target;
         this.mirrorClient = null;
     }
@@ -22,11 +34,20 @@ class DOMWatcher extends AbstractWatcher {
 
         this.mirrorClient = new TreeMirrorClient(this.target, {
             initialize: (rootId, children) => {
-                this.report('dom-init', [rootId, children]);
+                let initData = {
+                    'root-id': rootId,
+                    'children': children,
+                    'context': {
+                        'uri': location.href,
+                        'window-size': Utils.getWindowSize(),
+                        'user-agent': navigator.userAgent
+                    }
+                };
+                this.report('dom-init', initData);
             },
 
             applyChanged: (removed, addedOrMoved, attributes, text) => {
-                if (!this.checkIfExpired()) {
+                if (!this.checkMaxIdleTime()) {
                     this.stop();
                     return;
                 }
@@ -67,7 +88,7 @@ class DOMWatcher extends AbstractWatcher {
     }
 
     _checkAndUpdateBuffer(newData, checkFunc) {
-        let bufferData = this.scenario.getBuffer().getBufferData();
+        let bufferData = this.getScenario().getSender().getQueue();
         for (let index = 0; index < bufferData.length; index++) {
             let data = bufferData[index];
             let oldData = data['data'];
@@ -76,7 +97,7 @@ class DOMWatcher extends AbstractWatcher {
 
             if (checkFunc(oldData)) {
                 data['data'] = newData;
-                this.scenario.getBuffer().updateBufferData(index, data);
+                this.getScenario().getSender().updateQueue(index, data);
                 return false;
             }
         }

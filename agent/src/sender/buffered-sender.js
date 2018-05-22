@@ -1,12 +1,13 @@
-import * as logger from './logger';
+import * as logger from '../logger';
+import CompressibleSender from './compressible-sender';
 
-class Buffer {
+class BufferedSender {
 
     /**
-     * @param {Sender} sender
+     * @param {string} endpoint
      * @param {object} options
      */
-    constructor(sender, options = {}) {
+    constructor(endpoint, options = {}) {
         let defaultOptions = {
             'maxTime': 4000,   // millisecond
             'maxCount': 20,    // maximum buffer elements count
@@ -19,7 +20,7 @@ class Buffer {
         Object.assign(this, defaultOptions, options);
 
         this.buffer = [];
-        this.sender = sender;
+        this.sender = new CompressibleSender(endpoint);
         this.totalSize = 0;
         this.timer = null;
         this.lastFlushTime = +new Date();
@@ -28,9 +29,11 @@ class Buffer {
     }
 
     /**
-     * @param {mixed} data
+     * sends data to buffer or to the endpoint (based on buffer settings)
+     *
+     * @param {object} data
      */
-    add(data) {
+    send(data) {
         if (!data) return;
         this.buffer.push(data);
         this.totalSize += this._getDataSize(data);
@@ -40,16 +43,17 @@ class Buffer {
     /**
      * @returns {Array}
      */
-    getBufferData() {
+    getQueue() {
         return this.buffer;
     }
 
     /**
      * @param {int} index
-     * @param {mixed} data
-     * @returns {Buffer}
+     * @param {object} data
+     *
+     * @returns {BufferedSender}
      */
-    updateBufferData(index, data) {
+    updateQueue(index, data) {
         this.buffer[index] = data;
         return this;
     }
@@ -82,7 +86,7 @@ class Buffer {
         logger.debug('flushing buffered elements: ' + bufferLength);
 
         this.sender.batchSend(
-            this.getBufferData(),
+            this.getQueue(),
             () => {
                 this.pending += bufferLength;
             },
@@ -129,4 +133,4 @@ class Buffer {
 
 }
 
-export default Buffer;
+export default BufferedSender;
