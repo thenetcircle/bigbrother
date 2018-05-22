@@ -1,9 +1,13 @@
-channel:
-    type: kafka
-    params:
-        topics_mapping:
-            topic1: verb
-        producer_config:
-            bootstrap-servers: xxx
-        consumer_config:
-            bootstrap-servers: xxx
+app:
+    channel: test_kafka
+
+channels:
+    test_kafka:
+        type: kafka
+        params:
+            producer_config:
+                bootstrap-servers: xxx
+            consumer_config:
+                bootstrap-servers: xxx
+            topics_mapping:
+                verb1: topic1

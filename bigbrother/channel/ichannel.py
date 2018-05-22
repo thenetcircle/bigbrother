@@ -10,6 +10,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ..act import Act
 
-class ChannelTimeout(RuntimeError):
-    pass
+
+class IChannel:
+    """ Channel interface, Channel queues the users' actions for next processes"""
+
+    def push(self, act: Act) -> None:
+        """pushes a new elem to a channel"""
+        raise NotImplementedError
+
+    def pull(self) -> Act:
+        """pulls a act from a channel"""
+        raise NotImplementedError

@@ -10,18 +10,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .channel import Channel
+from .ichannel import IChannel
+from ..act import Act
 from kafka import KafkaProducer
 
 
-class KafkaChannel(Channel):
+class KafkaChannel(IChannel):
     """queues the users' actions by kafka"""
 
-    def __init__(self, topics_mapping, producer_config, consumer_config):
+    def __init__(self, producer_config: dict, consumer_config: dict, topics_mapping: dict):
         """
-        :param dict topics_mapping: the mapping for topic -> elem_name
-        :param dict producer_config: the config dict of producer
-        :param dict consumer_config: the config dict of consumer
+        :param producer_config: the config dict of producer
+        :param consumer_config: the config dict of consumer
+        :param topics_mapping: the mapping for act_verb -> topic
         """
         assert type(producer_config) == dict and type(consumer_config) == dict
 
@@ -31,12 +32,9 @@ class KafkaChannel(Channel):
         self.consumer_config = consumer_config
         self.consumer = None
 
-    def push(self, elem):
-        """
-        pushes a new elem to kafka
+        self.topic_mapping = topics_mapping
 
-        :param dict elem: the elem pushes to kafka, expects a {key: value} pair
-        """
+    def push(self, act: Act) -> None:
         def success_callback(metadata):
             pass
 
@@ -44,27 +42,21 @@ class KafkaChannel(Channel):
             pass
 
         self.get_producer()\
-            .send(self.get_elem_topic(elem), elem)\
+            .send(self.get_topic(act), value=act.raw_str, key=self.get_key(act))\
             .add_callback(success_callback)\
             .add_errback(error_callback)
 
-    def pull(self):
-        """
-        pulls a elem from a channel
-
-        :return: the elem
-        """
+    def pull(self) -> Act:
         raise NotImplementedError()
 
-    def get_producer(self):
+    def get_producer(self) -> KafkaProducer:
         if self.producer is None:
             self.producer = KafkaProducer(**self.producer_config)
 
         return self.producer
 
-    def get_elem_topic(self, elem) -> str:
-        """
-        :param elem:
-        :return:
-        """
+    def get_topic(self, act: Act) -> str:
+        pass
+
+    def get_key(self, act: Act) -> str:
         pass

@@ -13,8 +13,15 @@
 import os
 import sys
 import yaml
+from typing import Any
 
-from .constants import Constants
+from . import constants
+
+
+class IllegalConfigError(Exception):
+    def __init__(self, path='', error=None):
+        self.path = path
+        self.error = error
 
 
 class _AppConfig:
@@ -24,10 +31,10 @@ class _AppConfig:
         self.config = self._load_configfile(self.configfile)
         # TODO: check config?
 
-    def get(self, path, default=None):
+    def get(self, path: str, default: Any=None) -> Any:
         """get config by a path
 
-        :param str path: path of the config value, separated by dot, for example: channel.type, channel.params
+        :param path: path of the config value, separated by dot, for example: channel.type, channel.params
         :param default: the default return value if the path can not be found
         :return:
         """
@@ -39,11 +46,29 @@ class _AppConfig:
             result = default
         return result
 
-    def get_configfile(self):
+    def has(self, path: str) -> bool:
+        return self.get(path) is not None
+
+    def get_configfile(self) -> str:
         return self.configfile
 
+    def get_channel_config(self) -> dict:
+        """
+        :return: tuple (channel_type, channel_params)
+        """
+        channel_name = self.get('app.channel')
+        if channel_name is None:
+            raise IllegalConfigError('app.channel')
+
+        channel_path = 'channels.{}'.format(channel_name)
+        channel_config = self.get(channel_path)
+        if channel_config is None:
+            raise IllegalConfigError(channel_path)
+
+        return channel_config
+
     @staticmethod
-    def _load_configfile(configfile):
+    def _load_configfile(configfile: str) -> Any:
         try:
             with open(configfile, 'r') as f:
                 return yaml.load(f)
@@ -51,7 +76,7 @@ class _AppConfig:
             raise
 
     @staticmethod
-    def _get_configfile():
+    def _get_configfile() -> str:
         """returns configfile specified by app arguments or environment variable"""
         arg_configfile = ''
         try:
@@ -64,8 +89,8 @@ class _AppConfig:
 
         if arg_configfile:
             return arg_configfile
-        elif os.environ.get(Constants.ENV_CONFIGFILE):
-            return os.environ.get(Constants.ENV_CONFIGFILE)
+        elif os.environ.get(constants.EnvConstants.CONFIGFILE):
+            return os.environ.get(constants.EnvConstants.CONFIGFILE)
         else:
             raise Exception('configuration file is not set.')
 

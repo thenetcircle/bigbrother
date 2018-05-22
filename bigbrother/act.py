@@ -16,19 +16,19 @@ import json
 class Act:
 
     @staticmethod
-    def from_request(raw_str):
-        assert type(raw_str) in (str, bytes, bytearray) and raw_str != ''
+    def from_request(raw_str: str):
+        assert raw_str != ''
         raw_obj = json.loads(raw_str)
         return Act(raw_obj['sid'], raw_obj['seq'], raw_obj['verb'], raw_obj['time'], raw_obj['data'], raw_str)
 
-    def __init__(self, sid, seq, verb, time=None, data=None, raw_str=None):
+    def __init__(self, sid: str, seq: str, verb: str, time: str=None, data: dict=None, raw_str: str=None):
         """expresses the acts in Scenario
 
-        :param str sid: a session id ties these serial of acts
-        :param str seq: sequence numbers of this act in the session
-        :param str verb: the verb of the act
-        :param str time: the act happens time
-        :param dict data: data of the act
+        :param sid: a session id ties these serial of acts
+        :param seq: sequence numbers of this act in the session
+        :param verb: the verb of the act
+        :param time: the act happens time
+        :param data: data of the act
         """
         self.sid = sid
         self.seq = seq

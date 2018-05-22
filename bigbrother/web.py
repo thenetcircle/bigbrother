@@ -10,17 +10,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import argparse
 import gzip
 
 from flask import Flask, request
-from .utils import Utils
+from . import utils
+from .act import Act
+from .factories import ChannelFactory
 
-templateDir = Utils.app_path('templates')
+templateDir = utils.app_path('templates')
 
 app = Flask(__name__, template_folder=templateDir)
-app.debug = bool(os.environ.get('DEBUG'))
 
 
 @app.route('/')
@@ -37,15 +36,13 @@ def beehive():
     if isCompressed:
         body = gzip.decompress(body).decode('utf-8')
 
-    for record in body.split(delimiter):
-        print(record)
+    channel = ChannelFactory.get_channel()
+
+    for req_str in body.split(delimiter):
+        try:
+            act = Act.from_request(req_str)
+            channel.push(act)
+        except:
+            pass
 
     return 'done'
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=5000)
-    parser.add_argument("--host", default="127.0.0.1")
-    args = parser.parse_args()
-    app.run(port=args.port, host=args.host)
