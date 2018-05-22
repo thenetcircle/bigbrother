@@ -11,6 +11,6 @@
 # limitations under the License.
 
 
-class EnvConstants:
+class EnvKeys:
 
     CONFIGFILE = 'BIGBROTHER_CONFIG'

@@ -53,9 +53,6 @@ class _AppConfig:
         return self.configfile
 
     def get_channel_config(self) -> dict:
-        """
-        :return: tuple (channel_type, channel_params)
-        """
         channel_name = self.get('app.channel')
         if channel_name is None:
             raise IllegalConfigError('app.channel')
@@ -89,8 +86,8 @@ class _AppConfig:
 
         if arg_configfile:
             return arg_configfile
-        elif os.environ.get(constants.EnvConstants.CONFIGFILE):
-            return os.environ.get(constants.EnvConstants.CONFIGFILE)
+        elif os.environ.get(constants.EnvKeys.CONFIGFILE):
+            return os.environ.get(constants.EnvKeys.CONFIGFILE)
         else:
             raise Exception('configuration file is not set.')
 

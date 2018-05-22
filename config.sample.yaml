@@ -6,8 +6,8 @@ channels:
         type: kafka
         params:
             producer_config:
-                bootstrap-servers: xxx
+                bootstrap-servers: maggie-kafka-1:9093
             consumer_config:
-                bootstrap-servers: xxx
+                bootstrap-servers: maggie-kafka-1:9093
             topics_mapping:
-                verb1: topic1
+                bigbrother-test: (.*)

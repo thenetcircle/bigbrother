@@ -1,7 +1,7 @@
 # Welcome to Makefile of Bigbrother
 
 watch:
-	FLASK_APP=bigbrother FLASK_DEBUG=1 pipenv run python -m flask run
+	FLASK_APP=bigbrother FLASK_DEBUG=1 BIGBROTHER_CONFIG=$(PWD)/config.sample.yaml pipenv run python -m flask run
 
 watch-agent:
 	cd agent && npm run dev

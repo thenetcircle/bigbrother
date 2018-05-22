@@ -10,6 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
+
 from .ichannel import IChannel
 from ..act import Act
 from kafka import KafkaProducer
@@ -22,7 +24,7 @@ class KafkaChannel(IChannel):
         """
         :param producer_config: the config dict of producer
         :param consumer_config: the config dict of consumer
-        :param topics_mapping: the mapping for act_verb -> topic
+        :param topics_mapping: the mapping for topic -> tuple(patterns)
         """
         assert type(producer_config) == dict and type(consumer_config) == dict
 
@@ -42,7 +44,7 @@ class KafkaChannel(IChannel):
             pass
 
         self.get_producer()\
-            .send(self.get_topic(act), value=act.raw_str, key=self.get_key(act))\
+            .send(self.get_topic(act), value=act.raw_str)\
             .add_callback(success_callback)\
             .add_errback(error_callback)
 
@@ -56,7 +58,10 @@ class KafkaChannel(IChannel):
         return self.producer
 
     def get_topic(self, act: Act) -> str:
-        pass
+        for topic, patterns in self.topic_mapping.items():
+            for _pattern in patterns:
+                regex = re.compile(_pattern)
+                if regex.search(act.verb):
+                    return topic
 
-    def get_key(self, act: Act) -> str:
-        pass
+        return 'default'

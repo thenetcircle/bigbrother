@@ -11,8 +11,10 @@
 # limitations under the License.
 
 import gzip
+import json
 
 from flask import Flask, request
+
 from . import utils
 from .act import Act
 from .factories import ChannelFactory
@@ -20,6 +22,15 @@ from .factories import ChannelFactory
 templateDir = utils.app_path('templates')
 
 app = Flask(__name__, template_folder=templateDir)
+
+
+def json_response(data=None, code=0, error=''):
+    resp = {code: code}
+    if data:
+        resp['data'] = data
+    if error != '':
+        resp['error'] = error
+    return json.dumps(resp)
 
 
 @app.route('/')
@@ -30,10 +41,10 @@ def home():
 @app.route('/api/beehive', methods=['POST'])
 def beehive():
     delimiter = '|||'
-    isCompressed = request.args.get('g', '') == '1'
+    is_compressed = request.args.get('g', '') == '1'
 
     body = request.data
-    if isCompressed:
+    if is_compressed:
         body = gzip.decompress(body).decode('utf-8')
 
     channel = ChannelFactory.get_channel()
@@ -45,4 +56,4 @@ def beehive():
         except:
             pass
 
-    return 'done'
+    return json_response()
