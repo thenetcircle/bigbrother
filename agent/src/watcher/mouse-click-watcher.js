@@ -33,7 +33,13 @@ class MouseClickWatcher extends AbstractWatcher {
             return;
         }
 
-        this.report('click', [event.pageX, event.pageY]);
+        this.report(
+            'mouse.click',
+            {
+                'x': event.pageX,
+                'y': event.pageY
+            }
+        );
     }
 }
 

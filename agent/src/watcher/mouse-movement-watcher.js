@@ -39,7 +39,7 @@ class MouseMovementWatcher extends AbstractWatcher {
 
         if (!this.timer) {
             this.timer = setTimeout(() => {
-                this.report('move', [event.pageX, event.pageY]);
+                this.report('mouse.move', {'x': event.pageX, 'y': event.pageY});
                 this.timer = null;
             }, this.collectingInterval);
         }

@@ -28,6 +28,14 @@ class Utils {
         return true;
     }
 
+    static getCountOfOwnProperty(obj) {
+        let count = 0;
+        for (let prop in obj)
+            if (obj.hasOwnProperty(prop))
+                count++;
+        return count;
+    }
+
 }
 
 export default Utils;

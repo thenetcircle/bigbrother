@@ -43,7 +43,7 @@ class DOMWatcher extends AbstractWatcher {
                         'user-agent': navigator.userAgent
                     }
                 };
-                this.report('dom-init', initData);
+                this.report('dom.init', initData);
             },
 
             applyChanged: (removed, addedOrMoved, attributes, text) => {
@@ -53,12 +53,19 @@ class DOMWatcher extends AbstractWatcher {
                 }
 
                 if (removed.length || addedOrMoved.length || attributes.length || text.length) {
-                    let data = [removed, addedOrMoved, attributes, text];
+                    let data = {
+                        'removed': removed,
+                        'changed': addedOrMoved,
+                        'attrs': attributes,
+                        'text': text
+                    };
+
                     if (!this._checkChanges(data)) {
                         logger.debug('duplicated dom changes, buffer has updated.');
                         return;
                     }
-                    this.report('dom-change', data);
+
+                    this.report('dom.change', data);
                 }
             }
         });
@@ -76,7 +83,10 @@ class DOMWatcher extends AbstractWatcher {
             if (DOMWatcher._checkIsIgnoredStyles(data))
                 return false;
 
-            return this._checkAndUpdateBuffer(data, _data => this._checkIsStyleChanges(_data) && DOMWatcher._compareAttributes(data[2], _data[2]));
+            return this._checkAndUpdateBuffer(
+                data,
+                _data => this._checkIsStyleChanges(_data) && DOMWatcher._compareAttributes(data['attrs'], _data['attrs'])
+            );
 
         }
         else if (this._checkIsDomChanges(data)) {
@@ -88,9 +98,9 @@ class DOMWatcher extends AbstractWatcher {
     }
 
     _checkAndUpdateBuffer(newData, checkFunc) {
-        let bufferData = this.getScenario().getSender().getQueue();
-        for (let index = 0; index < bufferData.length; index++) {
-            let data = bufferData[index];
+        let queuedData = this.getScenario().getSender().getQueue();
+        for (let index = 0; index < queuedData.length; index++) {
+            let data = queuedData[index];
             let oldData = data['data'];
 
             if (!Array.isArray(oldData)) continue;
@@ -105,37 +115,29 @@ class DOMWatcher extends AbstractWatcher {
     }
 
     _checkIsStyleChanges(data) {
-        return data[0].length === 0
-            && data[1].length === 0
-            && data[2].length > 0
-            && data[3].length === 0
-            && data[2].filter(node => {
-                return node.attributes.style && DOMWatcher._getCountOfOwnProperty(node.attributes) === 1
-            }).length === data[2].length;
+        return data['removed'].length === 0
+            && data['changed'].length === 0
+            && data['attrs'].length > 0
+            && data['text'].length === 0
+            && data['attrs'].filter(node => {
+                return node.attributes.style && Utils.getCountOfOwnProperty(node.attributes) === 1
+            }).length === data['attrs'].length;
     }
 
     _checkIsDomChanges(data) {
-        return data[0].length === 0
-            && data[1].length === 0
-            && data[2].length > 0
-            && data[3].length === 0
-            && data[2].filter(node => {
-                return node.attributes.d && DOMWatcher._getCountOfOwnProperty(node.attributes) === 1
-            }).length === data[2].length;
+        return data['removed'].length === 0
+            && data['changed'].length === 0
+            && data['attrs'].length > 0
+            && data['text'].length === 0
+            && data['attrs'].filter(node => {
+                return node.attributes.d && Utils.getCountOfOwnProperty(node.attributes) === 1
+            }).length === data['attrs'].length;
     }
 
     static _checkIsIgnoredStyles(data) {
-        return data[2].filter(node => {
+        return data['attrs'].filter(node => {
             return node.attributes.style.indexOf('opacity:') !== -1
-        }).length === data[2].length;
-    }
-
-    static _getCountOfOwnProperty(obj) {
-        let count = 0;
-        for (let prop in obj)
-            if (obj.hasOwnProperty(prop))
-                count++;
-        return count;
+        }).length === data['attrs'].length;
     }
 
     static _compareAttributes(attrs1, attrs2) {

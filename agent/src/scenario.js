@@ -1,10 +1,21 @@
 import * as logger from "./logger";
 import AbstractWatcher from "./watcher/abstract-watcher";
 import Utils from './utils';
+import md5 from 'blueimp-md5';
 
 class Scenario {
 
     constructor(name, sender, metadata = {}) {
+        if (!name) {
+            throw new Error('Scenario requires a name.');
+        }
+        if (!sender) {
+            throw new Error(`Scenario requires a sender.`);
+        }
+        if (!Scenario._checkMetadata(metadata)) {
+            throw new Error(`Scenario metadata is invalid.`);
+        }
+
         this.name = name;
         this.sender = sender;
         this.metadata = metadata;
@@ -99,9 +110,11 @@ class Scenario {
      * @param {object|array|string} data the data of the act
      */
     report(verb, data) {
+        this.sequence++;
+
         let _data = {
             sid: this.sessionId,
-            seq: ++this.sequence,
+            seq: this.sequence,
             verb: verb,
             time: +new Date(),
             data: data
@@ -126,7 +139,7 @@ class Scenario {
             return this;
         }
 
-        this.report('set-metadata', metadata);
+        this.report('scenario.set-metadata', metadata);
         return this;
     }
 
@@ -154,12 +167,12 @@ class Scenario {
     }
 
     _initSession() {
-        this.report('sess-init', this.metadata);
         this.sequence = 0;
+        this.report('scenario.init-session', this.metadata);
     }
 
     _generateSessionId() {
-        return this.name + '-' + Utils.getFormattedDate() + '-' + Utils.getRandomInt(1000, 9999);
+        return md5(this.name).substr(0,8) + '-' + Utils.getFormattedDate() + '-' + Utils.getRandomInt(1000, 9999);
     }
 
     static _checkMetadata(metadata) {

@@ -29,7 +29,7 @@ class ScrollWatcher extends AbstractWatcher {
 
         if (!this.timer) {
             this.timer = setTimeout(() => {
-                this.report('scroll', [window.scrollX, window.scrollY]);
+                this.report('window.scroll', { 'x': window.scrollX, 'y': window.scrollY });
                 this.timer = null;
             }, this.collectingInterval);
         }
