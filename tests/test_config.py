@@ -13,14 +13,14 @@
 import unittest
 import os
 
-from bigbrother import constants
+from bigbrother.config import ConfigKeys
 
 
 class ConfigTest(unittest.TestCase):
 
     def setUp(self):
         self.test_configfile = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fixtures', 'config.test.yaml')
-        os.environ.setdefault(constants.EnvKeys.CONFIGFILE, self.test_configfile)
+        os.environ.setdefault(ConfigKeys.CONFIGFILE, self.test_configfile)
 
         from bigbrother.config import config
         self.config = config

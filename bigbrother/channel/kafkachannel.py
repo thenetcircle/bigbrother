@@ -38,10 +38,10 @@ class KafkaChannel(IChannel):
 
     def push(self, act: Act) -> None:
         def success_callback(metadata):
-            pass
+            print(metadata)
 
         def error_callback(ex):
-            pass
+            print(ex)
 
         self.get_producer()\
             .send(self.get_topic(act), value=act.raw_str)\

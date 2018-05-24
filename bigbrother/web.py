@@ -15,9 +15,9 @@ import json
 
 from flask import Flask, request
 
+from .bootstrap import context
 from . import utils
 from .act import Act
-from .factories import ChannelFactory
 
 templateDir = utils.app_path('templates')
 
@@ -47,7 +47,7 @@ def beehive():
     if is_compressed:
         body = gzip.decompress(body).decode('utf-8')
 
-    channel = ChannelFactory.get_channel()
+    channel = context.get_channel()
 
     for req_str in body.split(delimiter):
         try:

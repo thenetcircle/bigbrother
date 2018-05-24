@@ -14,7 +14,9 @@ from ..act import Act
 
 
 class IChannel:
-    """ Channel interface, Channel queues the users' actions for next processes"""
+    """channel interface
+
+    channel is a queue to line users' acts"""
 
     def push(self, act: Act) -> None:
         """pushes a new elem to a channel"""

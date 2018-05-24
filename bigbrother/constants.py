@@ -11,6 +11,6 @@
 # limitations under the License.
 
 
-class EnvKeys:
+class Environ:
 
-    CONFIGFILE = 'BIGBROTHER_CONFIG'
+    CONFIGFILE = 'BB_CONFIG'
