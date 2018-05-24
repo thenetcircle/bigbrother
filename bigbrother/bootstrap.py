@@ -33,6 +33,18 @@ class Context:
         return self.channel
 
 
+def setup_logging(config: Config) -> None:
+    import logging
+    logging_config = config.get_logging_config()
+    logging.basicConfig(**logging_config)
+
+
+def bootstrap(configfile):
+    config = Config(configfile)
+    setup_logging(config)
+    return Context(config)
+
+
 def choose_configfile() -> str:
     """found config file based on app arguments or environment variable etc..."""
     arg_configfile = ''
@@ -52,6 +64,4 @@ def choose_configfile() -> str:
         raise RuntimeError('can not found proper config file.')
 
 
-context = Context(
-    Config(choose_configfile())
-)
+context = bootstrap(choose_configfile())

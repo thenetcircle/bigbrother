@@ -11,14 +11,18 @@
 # limitations under the License.
 
 import re
+import logging
 
 from .ichannel import IChannel
 from ..act import Act
 from kafka import KafkaProducer
 
 
+logger = logging.getLogger(__name__)
+
+
 class KafkaChannel(IChannel):
-    """queues the users' actions by kafka"""
+    """line users' acts by kafka"""
 
     def __init__(self, producer_config: dict, consumer_config: dict, topics_mapping: dict):
         """
@@ -37,23 +41,27 @@ class KafkaChannel(IChannel):
         self.topic_mapping = topics_mapping
 
     def push(self, act: Act) -> None:
-        def success_callback(metadata):
-            print(metadata)
+        topic = self.get_topic(act)
 
-        def error_callback(ex):
-            print(ex)
+        logger.debug('going to push act "{} - {}" to topic "{}"'.format(act.sid, act.verb, topic))
 
         self.get_producer()\
-            .send(self.get_topic(act), value=act.raw_str)\
-            .add_callback(success_callback)\
-            .add_errback(error_callback)
+            .send(topic, value=act.raw_str)\
+            .add_callback(KafkaChannel.on_push_success)\
+            .add_errback(KafkaChannel.on_push_error)
+
+        self.get_producer().flush()
 
     def pull(self) -> Act:
         raise NotImplementedError()
 
     def get_producer(self) -> KafkaProducer:
         if self.producer is None:
-            self.producer = KafkaProducer(**self.producer_config)
+            try:
+                self.producer = KafkaProducer(**self.producer_config)
+            except Exception as ex:
+                logger.error(ex)
+                raise
 
         return self.producer
 
@@ -65,3 +73,16 @@ class KafkaChannel(IChannel):
                     return topic
 
         return 'default'
+
+    @staticmethod
+    def on_push_success(metadata):
+        logger.debug(
+            'push to kafka success, topic: {}, partition: {}, offset: {}',
+            metadata.topic,
+            metadata.partition,
+            metadata.offset
+        )
+
+    @staticmethod
+    def on_push_error(excp):
+        logger.error('push to kafka failed', exc_info=excp)

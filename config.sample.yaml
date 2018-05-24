@@ -1,13 +1,19 @@
-app:
-    channel: test_kafka
+#---------------------
+# configuration sample
+#---------------------
 
-channels:
-    test_kafka:
-        type: kafka
-        params:
-            producer_config:
-                bootstrap-servers: maggie-kafka-1:9093
-            consumer_config:
-                bootstrap-servers: maggie-kafka-1:9093
-            topics_mapping:
-                bigbrother-test: (.*)
+channel:
+    type: kafka
+    params:
+        producer_config:
+            bootstrap_servers: ["maggie-kafka-1:9093"]
+        consumer_config:
+            bootstrap_servers: ["maggie-kafka-1:9093"]
+        topics_mapping:
+            bigbrother-test: [".*"]
+
+# check logging module for more parameters
+logging:
+    level: DEBUG
+    # filename:
+    # format:

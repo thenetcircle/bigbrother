@@ -57,13 +57,23 @@ class Config:
             raise
 
     def get_channel_config(self) -> tuple:
-        channel_name = self.get('app.channel')
-        if channel_name is None:
-            raise ConfigError('config "app.channel" does not exist.')
+        channel_type = self.get('channel.type')
+        if channel_type is None:
+            raise ConfigError('config "channel.type" does not exist.')
 
-        channel_path = 'channels.{}'.format(channel_name)
-        channel_config = self.get(channel_path)
-        if channel_config is None:
-            raise ConfigError('config "{}" does not exist.'.format(channel_path))
+        channel_params = self.get('channel.params')
+        if channel_params is None:
+            raise ConfigError('config "channel.params" does not exist.')
 
-        return channel_config['type'], channel_config['params']
+        return channel_type, channel_params
+
+    def get_logging_config(self) -> dict:
+        import logging
+
+        logging_config = self.get('logging', {})
+        if 'level' in logging_config and logging_config['level'].upper() in ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'):
+            logging_config['level'] = eval('logging.{}'.format(logging_config['level'].upper()))
+        else:
+            logging_config['level'] = logging.DEBUG
+
+        return logging_config
