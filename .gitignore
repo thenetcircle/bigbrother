@@ -5,3 +5,4 @@ venv/
 .env
 bigbrother/static/bigbrother-agent.js
 __pycache__/
+bigbrother.egg-info/

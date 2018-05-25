@@ -11,4 +11,9 @@
 # limitations under the License.
 
 
-ENV_CONFIGFILE = 'BB_CONFIG'
+def main():
+    print('bigbrother is running')
+
+
+if __name__ == '__main__':
+    main()

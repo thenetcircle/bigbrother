@@ -10,5 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-ENV_CONFIGFILE = 'BB_CONFIG'
+if __name__ == '__main__':
+    from .cli import main
+    main()

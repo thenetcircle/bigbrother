@@ -36,3 +36,7 @@ class Act:
         self.time = time
         self.data = data if data is not None else {}
         self.raw_str = raw_str
+
+    def __str__(self):
+        return '{}[{}:{}]'.format(self.verb, self.sid, self.seq)
+

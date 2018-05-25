@@ -43,14 +43,12 @@ class KafkaChannel(IChannel):
     def push(self, act: Act) -> None:
         topic = self.get_topic(act)
 
-        logger.debug('going to push act "{} - {}" to topic "{}"'.format(act.sid, act.verb, topic))
+        logger.debug('going to push act "{}" to topic "{}"'.format(act, topic))
 
         self.get_producer()\
-            .send(topic, value=act.raw_str)\
+            .send(topic, value=act.raw_str.encode('utf-8'))\
             .add_callback(KafkaChannel.on_push_success)\
             .add_errback(KafkaChannel.on_push_error)
-
-        self.get_producer().flush()
 
     def pull(self) -> Act:
         raise NotImplementedError()
@@ -76,13 +74,9 @@ class KafkaChannel(IChannel):
 
     @staticmethod
     def on_push_success(metadata):
-        logger.debug(
-            'push to kafka success, topic: {}, partition: {}, offset: {}',
-            metadata.topic,
-            metadata.partition,
-            metadata.offset
-        )
+        pass
+        # logger.debug('push to kafka success, topic: {}', metadata.topic)
 
     @staticmethod
     def on_push_error(excp):
-        logger.error('push to kafka failed', exc_info=excp)
+        logger.error('push a act to kafka failed', exc_info=excp)

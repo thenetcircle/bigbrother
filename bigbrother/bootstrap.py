@@ -58,8 +58,8 @@ def choose_configfile() -> str:
 
     if arg_configfile:
         return arg_configfile
-    elif os.environ.get(constants.Environ.CONFIGFILE):
-        return os.environ.get(constants.Environ.CONFIGFILE)
+    elif os.environ.get(constants.ENV_CONFIGFILE):
+        return os.environ.get(constants.ENV_CONFIGFILE)
     else:
         raise RuntimeError('can not found proper config file.')
 

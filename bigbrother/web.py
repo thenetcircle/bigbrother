@@ -15,9 +15,9 @@ import json
 
 from flask import Flask, request
 
-from .bootstrap import context
 from . import utils
 from .act import Act
+from .bootstrap import context
 
 templateDir = utils.app_path('templates')
 
@@ -25,7 +25,7 @@ app = Flask(__name__, template_folder=templateDir)
 
 
 def json_response(data=None, code=0, error=''):
-    resp = {code: code}
+    resp = {'code': code}
     if data:
         resp['data'] = data
     if error != '':
@@ -53,7 +53,8 @@ def beehive():
         try:
             act = Act.from_request(req_str)
             channel.push(act)
-        except:
+        except Exception as ex:
+            app.logger.exception(ex)
             pass
 
     return json_response()
