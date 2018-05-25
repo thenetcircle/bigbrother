@@ -10,9 +10,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import click
+
+
+@click.group()
+def cli():
+    pass
+
+
+@cli.command('run')
+def command_run():
+    click.echo('running')
+
 
 def main():
-    print('bigbrother is running')
+    cli()
 
 
 if __name__ == '__main__':

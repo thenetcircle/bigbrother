@@ -8,6 +8,7 @@ flask = "*"
 gunicorn = "*"
 kafka-python = "*"
 pyyaml = "*"
+click = "*"
 
 [dev-packages]
 pytest = "*"

@@ -10,11 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import sys
-
 from .channel import IChannel, create_channel
-from . import constants
 from .config import Config
 
 
@@ -43,25 +39,3 @@ def bootstrap(configfile):
     config = Config(configfile)
     setup_logging(config)
     return Context(config)
-
-
-def choose_configfile() -> str:
-    """found config file based on app arguments or environment variable etc..."""
-    arg_configfile = ''
-    try:
-        if len(sys.argv) > 1:
-            for i, arg in enumerate(sys.argv):
-                if (arg == '--config-file' or arg == '-c') and len(sys.argv) > i+1:
-                    arg_configfile = sys.argv[i+1]
-    except:
-        pass
-
-    if arg_configfile:
-        return arg_configfile
-    elif os.environ.get(constants.ENV_CONFIGFILE):
-        return os.environ.get(constants.ENV_CONFIGFILE)
-    else:
-        raise RuntimeError('can not found proper config file.')
-
-
-context = bootstrap(choose_configfile())

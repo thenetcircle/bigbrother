@@ -1,11 +1,11 @@
-.PHONY: all test install watch watch-agent
+.PHONY: all test install_local watch watch-agent
 
 all: test
 
 test:
 	pipenv run python -m unittest discover -s tests
 
-install:
+install_local:
 	pipenv run pip install -e .
 
 watch:

@@ -10,17 +10,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import sys
 import gzip
 import json
 
 from flask import Flask, request
 
-from . import utils
+from . import utils, constants
 from .act import Act
-from .bootstrap import context
+from .bootstrap import bootstrap
 
+
+# ---------- Bootstrap ------------
+def choose_configfile() -> str:
+    """found config file based on app arguments or environment variable etc..."""
+    arg_configfile = ''
+    try:
+        if len(sys.argv) > 1:
+            for i, arg in enumerate(sys.argv):
+                if (arg == '--config-file' or arg == '-c') and len(sys.argv) > i+1:
+                    arg_configfile = sys.argv[i+1]
+    except:
+        pass
+
+    if arg_configfile:
+        return arg_configfile
+    elif os.environ.get(constants.ENV_CONFIGFILE):
+        return os.environ.get(constants.ENV_CONFIGFILE)
+    else:
+        raise RuntimeError('can not found proper config file.')
+
+
+context = bootstrap(choose_configfile())
+
+
+# ---------- Create Flask Application ------------
 templateDir = utils.app_path('templates')
-
 app = Flask(__name__, template_folder=templateDir)
 
 
