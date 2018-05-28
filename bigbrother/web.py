@@ -19,7 +19,7 @@ from flask import Flask, request
 
 from . import utils, constants
 from .act import Act
-from .bootstrap import bootstrap
+from .core import bootstrap
 
 
 # ---------- Bootstrap ------------

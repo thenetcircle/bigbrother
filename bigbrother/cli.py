@@ -11,7 +11,7 @@
 # limitations under the License.
 
 import click
-from .bootstrap import bootstrap, Context
+from .core import bootstrap, Context
 from . import utils
 from .cmd import ETL
 

@@ -12,7 +12,7 @@
 
 import logging
 
-from .bootstrap import Context
+from .core import Context
 
 
 logger = logging.getLogger(__name__)

@@ -10,12 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import yaml
 from typing import Any
 
+import yaml
 
-class ConfigError(RuntimeError):
-    """Error when fetch config items"""
+from .channel import IChannel, create_channel
 
 
 class Config:
@@ -56,24 +55,39 @@ class Config:
         except IOError:
             raise
 
-    def get_channel_config(self) -> tuple:
-        channel_type = self.get('channel.type')
-        if channel_type is None:
-            raise ConfigError('config "channel.type" does not exist.')
 
-        channel_params = self.get('channel.params')
-        if channel_params is None:
-            raise ConfigError('config "channel.params" does not exist.')
+class Context:
 
-        return channel_type, channel_params
+    channel = None
 
-    def get_logging_config(self) -> dict:
-        import logging
+    def __init__(self, config: Config):
+        self.config = config
 
-        logging_config = self.get('logging', {})
-        if 'level' in logging_config and logging_config['level'].upper() in ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'):
-            logging_config['level'] = eval('logging.{}'.format(logging_config['level'].upper()))
-        else:
-            logging_config['level'] = logging.DEBUG
+    def get_channel(self) -> IChannel:
+        if self.channel is None:
+            self.channel = create_channel(self.config)
 
-        return logging_config
+        return self.channel
+
+    def __del__(self):
+        """clean up context related resources"""
+        pass
+
+
+def setup_logging(config: Config) -> None:
+    """setup config module"""
+    import logging
+
+    logging_config = config.get('logging', {})
+    if 'level' in logging_config and logging_config['level'].upper() in ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'):
+        logging_config['level'] = eval('logging.{}'.format(logging_config['level'].upper()))
+    else:
+        logging_config['level'] = logging.DEBUG
+
+    logging.basicConfig(**logging_config)
+
+
+def bootstrap(configfile):
+    config = Config(configfile)
+    setup_logging(config)
+    return Context(config)

@@ -16,14 +16,27 @@ from .kafkachannel import KafkaChannel
 channel_classes = dict(kafka=KafkaChannel)
 
 
-def create_channel(type: str, params: dict) -> IChannel:
-    """creates a channel based on the parameters
+def create_channel(config) -> IChannel:
+    """creates a channel based on config
 
-    :param type: channel type
-    :param params: channel params
+    :param config:
     :return: a IChannel implementation
     """
-    if type not in channel_classes:
-        raise RuntimeError('channel type {} is not supported.'.format(type))
+    channel_type, channel_params = _parse_channel_config(config)
 
-    return channel_classes[type](**params)
+    if channel_type not in channel_classes:
+        raise RuntimeError('channel type {} is not supported.'.format(channel_type))
+
+    return channel_classes[channel_type](**channel_params)
+
+
+def _parse_channel_config(config) -> tuple:
+    channel_type = config['channel.type']
+    if channel_type is None:
+        raise RuntimeError('config "channel.type" does not exist.')
+
+    channel_params = config['channel.params']
+    if channel_params is None:
+        raise RuntimeError('config "channel.params" does not exist.')
+
+    return channel_type, channel_params

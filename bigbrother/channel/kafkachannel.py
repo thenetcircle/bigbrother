@@ -51,7 +51,6 @@ class KafkaChannel(IChannel):
             .add_errback(self.on_push_error)
 
     def pull(self) -> Act:
-        logger.info('pulling acts from kafka channel')
         return next(self.get_consumer())
 
     def get_producer(self) -> KafkaProducer:
