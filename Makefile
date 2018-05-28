@@ -9,7 +9,7 @@ install_local:
 	pipenv run pip install -e .
 
 watch:
-	FLASK_APP=bigbrother.web FLASK_DEBUG=1 BB_CONFIG=$(PWD)/config.sample.yaml pipenv run python -m flask run
+	FLASK_APP=bigbrother.web FLASK_DEBUG=1 BB_CONFIG=$(PWD)/config.default.yaml pipenv run python -m flask run
 
 watch-agent:
 	cd agent && npm run dev

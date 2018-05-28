@@ -10,31 +10,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import click
-from .bootstrap import bootstrap, Context
-from . import utils
-from .cmd import ETL
+import logging
 
-context: Context = None
+from .bootstrap import Context
 
 
-@click.group()
-@click.option('--config-file', '-c', help='the configuration file',
-              default=utils.app_path('../config.default.yaml'))
-def cli(config_file: str):
-    global context
-    click.echo('bootstrap based on config file: {}'.format(config_file))
-    context = bootstrap(config_file)
+logger = logging.getLogger(__name__)
 
 
-@cli.command('etl')
-def command_etl():
-    ETL(context).run()
+class Cmd:
+
+    def __init__(self, context: Context):
+        self.context = context
+
+    def run(self):
+        raise NotImplementedError
 
 
-def main():
-    cli()
+class ETL(Cmd):
 
-
-if __name__ == '__main__':
-    main()
+    def run(self):
+        channel = self.context.get_channel()
+        try:
+            while True:
+                act = channel.pull()
+                logger.debug('pulled a new act {}'.format(act))
+        except Exception as ex:
+            logger.error('ETL command runs failed with error: {}'.format(ex))

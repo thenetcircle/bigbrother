@@ -28,6 +28,10 @@ class Context:
 
         return self.channel
 
+    def __del__(self):
+        """clean up context related resources"""
+        pass
+
 
 def setup_logging(config: Config) -> None:
     import logging

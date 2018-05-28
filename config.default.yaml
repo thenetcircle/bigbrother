@@ -9,8 +9,12 @@ channel:
             bootstrap_servers: ["maggie-kafka-1:9093"]
         consumer_config:
             bootstrap_servers: ["maggie-kafka-1:9093"]
+            client_id: bigbrother
+            group_id: bigbrother-etl
+            enable_auto_commit: true
         topics_mapping:
             bigbrother-test: [".*"]
+        log_level: INFO
 
 # check logging module for more parameters
 logging:
