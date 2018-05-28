@@ -12,6 +12,7 @@
 
 import logging
 
+from .act import Act
 from .core import Context
 
 
@@ -35,5 +36,12 @@ class ETL(Cmd):
             while True:
                 act = channel.pull()
                 logger.debug('pulled a new act {}'.format(act))
+                self.persist_act(act)
         except Exception as ex:
             logger.error('ETL command runs failed with error: {}'.format(ex))
+
+    def persist_act(self, act: Act):
+        pass
+
+    def transform_act(self, act: Act):
+        pass

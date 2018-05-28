@@ -77,7 +77,7 @@ def beehive():
 
     for req_str in body.split(delimiter):
         try:
-            act = Act.from_request(req_str)
+            act = Act.from_string(req_str)
             channel.push(act)
         except Exception as ex:
             app.logger.exception(ex)

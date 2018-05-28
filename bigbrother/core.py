@@ -15,6 +15,7 @@ from typing import Any
 import yaml
 
 from .channel import IChannel, create_channel
+from . import constants
 
 
 class Config:
@@ -78,7 +79,7 @@ def setup_logging(config: Config) -> None:
     """setup config module"""
     import logging
 
-    logging_config = config.get('logging', {})
+    logging_config = config.get(constants.CONF_LOGGING, {})
     if 'level' in logging_config and logging_config['level'].upper() in ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'):
         logging_config['level'] = eval('logging.{}'.format(logging_config['level'].upper()))
     else:

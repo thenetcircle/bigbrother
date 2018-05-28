@@ -12,6 +12,7 @@
 
 from .ichannel import IChannel
 from .kafkachannel import KafkaChannel
+from .. import constants
 
 channel_classes = dict(kafka=KafkaChannel)
 
@@ -31,12 +32,14 @@ def create_channel(config) -> IChannel:
 
 
 def _parse_channel_config(config) -> tuple:
-    channel_type = config['channel.type']
-    if channel_type is None:
-        raise RuntimeError('config "channel.type" does not exist.')
+    channel_config = config[constants.CONF_CHANNEL]
 
-    channel_params = config['channel.params']
+    channel_type = channel_config['type']
+    if channel_type is None:
+        raise RuntimeError('config "{}.type" does not exist.'.format(constants.CONF_CHANNEL))
+
+    channel_params = channel_config['params']
     if channel_params is None:
-        raise RuntimeError('config "channel.params" does not exist.')
+        raise RuntimeError('config "{}.params" does not exist.'.format(constants.CONF_CHANNEL))
 
     return channel_type, channel_params

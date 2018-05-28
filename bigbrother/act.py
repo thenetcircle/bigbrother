@@ -16,7 +16,7 @@ import json
 class Act:
 
     @staticmethod
-    def from_request(raw_str: str):
+    def from_string(raw_str: str):
         assert raw_str != ''
         raw_obj = json.loads(raw_str)
         return Act(raw_obj['sid'], raw_obj['seq'], raw_obj['verb'], raw_obj['time'], raw_obj['data'], raw_str)

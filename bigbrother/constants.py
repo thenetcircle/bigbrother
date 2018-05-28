@@ -12,3 +12,7 @@
 
 
 ENV_CONFIGFILE = 'BB_CONFIG'
+
+
+CONF_LOGGING = 'logging'
+CONF_CHANNEL = 'channel'

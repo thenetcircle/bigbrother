@@ -29,8 +29,6 @@ class KafkaChannel(IChannel):
         :param consumer_config: the config dict of consumer
         :param topics_mapping: the mapping for topic -> tuple(patterns)
         """
-        assert type(producer_config) == dict and type(consumer_config) == dict
-
         self.producer_config = producer_config
         self.producer = None
 
@@ -51,7 +49,8 @@ class KafkaChannel(IChannel):
             .add_errback(self.on_push_error)
 
     def pull(self) -> Act:
-        return next(self.get_consumer())
+        raw_str = next(self.get_consumer())
+        return Act.from_string(raw_str)
 
     def get_producer(self) -> KafkaProducer:
         if self.producer is None:
@@ -101,7 +100,3 @@ class KafkaChannel(IChannel):
     @staticmethod
     def on_push_error(excp):
         logger.error('push a act to kafka failed', exc_info=excp)
-
-    @staticmethod
-    def on_consumer_rebalance():
-        logger.debug('consumer rebalance')
