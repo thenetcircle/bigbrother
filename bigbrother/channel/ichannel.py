@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..act import Act
+from typing import Union
 
 
 class IChannel:
@@ -18,10 +18,10 @@ class IChannel:
 
     channel is a queue to line users' acts"""
 
-    def push(self, act: Act) -> None:
+    def push(self, data: Union[str, bytes]) -> None:
         """pushes a new elem to a channel"""
         raise NotImplementedError
 
-    def pull(self) -> Act:
+    def pull(self) -> bytes:
         """pulls a act from a channel"""
         raise NotImplementedError

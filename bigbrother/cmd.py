@@ -34,9 +34,8 @@ class ETL(Cmd):
         channel = self.context.get_channel()
         try:
             while True:
-                act = channel.pull()
-                logger.debug('pulled a new act {}'.format(act))
-                self.persist_act(act)
+                data = channel.pull()
+                logger.debug('pulled new data {}'.format(data))
         except Exception as ex:
             logger.error('ETL command runs failed with error: {}'.format(ex))
 

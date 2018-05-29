@@ -12,8 +12,7 @@ channel:
             client_id: bigbrother
             group_id: bigbrother-etl
             enable_auto_commit: true
-        topics_mapping:
-            bigbrother-test: [".*"]
+        topic: bigbrother-test
         log_level: INFO
 
 # check logging module for more parameters

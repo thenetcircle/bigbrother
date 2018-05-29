@@ -66,21 +66,17 @@ def home():
 
 @app.route('/api/beehive', methods=['POST'])
 def beehive():
-    delimiter = '|||'
     is_compressed = request.args.get('g', '') == '1'
 
-    body = request.data
+    data = request.data
     if is_compressed:
-        body = gzip.decompress(body).decode('utf-8')
-
+        data = gzip.decompress(data)
     channel = context.get_channel()
 
-    for req_str in body.split(delimiter):
-        try:
-            act = Act.from_string(req_str)
-            channel.push(act)
-        except Exception as ex:
-            app.logger.exception(ex)
-            pass
+    try:
+        channel.push(data)
+    except Exception as ex:
+        app.logger.exception(ex)
+        pass
 
     return json_response()
