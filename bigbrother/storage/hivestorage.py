@@ -11,9 +11,8 @@
 # limitations under the License.
 
 
-ENV_CONFIGFILE = 'BB_CONFIG'
 
-REQ_DELIMITER = '|||'
+class HiveStorage:
 
-CONF_LOGGING = 'logging'
-CONF_CHANNEL = 'channel'
+    def __init__(self):
+        pass

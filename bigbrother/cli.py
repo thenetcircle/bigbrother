@@ -11,11 +11,34 @@
 # limitations under the License.
 
 import click
+import logging
+
+from .etl.channel_puller import ChannelPuller
 from .core import bootstrap, Context
 from . import utils
-from .cmd import ETL
 
 context: Context = None
+logger = logging.getLogger(__name__)
+
+
+class Cmd:
+
+    def __init__(self, context: Context):
+        self.context = context
+
+    def run(self):
+        raise NotImplementedError
+
+
+class ETL(Cmd):
+
+    def run(self):
+        channel = self.context.get_channel()
+        try:
+            for act in ChannelPuller(channel):
+                logger.debug('pulled new act {}'.format(act))
+        except Exception as ex:
+            logger.error('ETL command runs failed with error: {}'.format(ex))
 
 
 @click.group()
